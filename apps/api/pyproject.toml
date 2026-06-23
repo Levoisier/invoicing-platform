@@ -1,0 +1,24 @@
+[project]
+name = "app"
+version = "0.1.0"
+description = "API host: the deployable that composes an edition from its dependency list."
+requires-python = ">=3.11"
+# THIS dependency list *is* the edition (README §1, ARCHITECTURE §1): nucleus +
+# the chosen modules + the chosen jurisdiction plugin. Swap the plugin line and
+# you ship a different country — zero code change elsewhere. That is the point.
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "alembic>=1.13",
+    "nucleus",
+    "invoicing",
+    "payments",
+    "tax_co",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/app"]

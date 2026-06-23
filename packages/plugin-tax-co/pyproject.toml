@@ -1,0 +1,21 @@
+[project]
+name = "tax_co"
+version = "0.1.0"
+description = "Colombia (CO / IVA) tax plugin: implements the nucleus TaxCalculator contract."
+requires-python = ">=3.11"
+# Depends on nucleus for the contract it implements — nothing else. The core does
+# the opposite: it never depends on this package (CLAUDE.md §2).
+dependencies = ["nucleus"]
+
+# Self-registration seam. The host discovers this calculator by loading the
+# `nucleus.plugins` entry points — no import of tax_co anywhere in the core. The
+# class is wired in B9; the entry point is declared now so the mechanism is visible.
+[project.entry-points."nucleus.plugins"]
+tax_co = "tax_co:ColombiaTaxCalculator"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/tax_co"]

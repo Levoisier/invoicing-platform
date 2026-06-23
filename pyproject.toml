@@ -1,0 +1,29 @@
+# uv *workspace root*. It is intentionally a "virtual" root (no [project] of its
+# own): the root is a coordinator, not a deployable. The deployable is apps/api,
+# which composes an edition by its dependency list — keeping "what gets shipped"
+# in one place instead of leaking into the workspace coordinator.
+[tool.uv.workspace]
+members = ["apps/api", "packages/*"]
+
+# Members refer to each other by clean import name (README §3: dir names are
+# prefixed, import names stay clean). These sources map those names onto the
+# in-repo packages so uv resolves them from source, not PyPI. Sources declared at
+# the workspace root are inherited by every member.
+[tool.uv.sources]
+nucleus = { workspace = true }
+invoicing = { workspace = true }
+payments = { workspace = true }
+tax_co = { workspace = true }
+
+# Tooling that belongs to the repo as a whole, not to any single package: the test
+# runner and the HTTP client used to exercise the API in tests.
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "httpx>=0.28",
+]
+
+# Discover tests anywhere a package keeps them (apps/api/tests today, packages/*/
+# tests as items land). One runner for the whole workspace.
+[tool.pytest.ini_options]
+testpaths = ["apps", "packages"]

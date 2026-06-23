@@ -38,6 +38,34 @@ or file when useful.
 
 <!-- Add new lessons below this line, newest first. -->
 
+## 2026-06-23 — uv virtual workspace root + cross-package sources (B0)
+**Context:** Standing up the uv workspace so `apps/api` can depend on the in-repo
+`nucleus`/`invoicing`/`payments`/`tax_co` packages by clean import name.
+**Surprise:** Two things worth remembering. (1) The workspace root needs no
+`[project]` table — a "virtual" root with just `[tool.uv.workspace]` works and keeps
+the root a coordinator, not a deployable. (2) `[tool.uv.sources]` declared at the
+root (`{ workspace = true }`) is *inherited* by all members, so each member can list
+`nucleus` as a dep without re-declaring the source. Dir names are prefixed
+(`module-invoicing`) but the wheel package is the clean name via
+`[tool.hatch.build.targets.wheel] packages = ["src/<name>"]`.
+**Resolution:** Virtual root + inherited sources + hatchling src-layout. `uv sync`
+installs all four packages editable; `make test` passes a host smoke test.
+**Takeaway:** Prefix-dir / clean-import (README §3) is a ~3-line hatchling setting,
+not a fight. Keep the workspace root package-less.
+
+## 2026-06-23 — No Docker daemon in the build sandbox; Starlette wants httpx2
+**Context:** Verifying B0's `make up` (Postgres) and the host smoke test.
+**Surprise:** (1) The remote build sandbox has no Docker daemon, so `make up`
+can't be exercised live here; `docker compose config` validates the file
+statically, which is the most we can prove in-sandbox. (2) Starlette 1.3's
+TestClient emits a deprecation: it wants `httpx2` instead of `httpx`. Harmless
+today (tests pass on httpx 0.28) but it will bite when we pin versions.
+**Resolution:** Rely on `docker compose config` for compose correctness in CI/sandbox;
+left the httpx warning alone for B0.
+**Takeaway:** Don't assume Docker is runnable in every environment — validate compose
+statically and gate live `make up` on a machine with the daemon. Revisit the
+httpx2 migration when we lock the test deps.
+
 ## 2026-06-23 — Foundation docs created; no code lessons yet
 **Context:** Bootstrapping the repo's agent-facing documentation before any code exists.
 **Surprise:** None — this is the seed entry.
