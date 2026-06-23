@@ -122,15 +122,40 @@ The README says it plainly and so do we: **library majors and tax rules drift.**
 
 ---
 
-## 4. Commits & branches
+## 4. Commit / branch / PR conventions
 
-- Develop on the branch you were assigned. Create it locally if needed. Never push to a
-  different branch without explicit permission.
-- One logical change per commit. Message: imperative subject line, then a body that says
-  **why** when the why isn't obvious from the diff. (Same principle as code comments.)
-- Do **not** open a pull request unless explicitly asked.
-- Keep generated artifacts (`types.ts`, lockfiles) consistent with their sources in the
-  same commit.
+The git history is part of the learning record — keep it clean and human-readable. The
+owner reads it to understand how the project evolved, so it must read like a person wrote
+it, not a bot.
+
+### Branches
+- **No `claude/`, `agent/`, `bot/`, or tool-named prefixes.** Branch names describe the
+  *work*, not who did it.
+- Use `type/short-kebab-summary`, where `type` ∈ `feat` · `fix` · `refactor` · `docs` ·
+  `chore` · `test`. Examples: `feat/money-primitive`, `fix/gapless-numbering-lock`,
+  `docs/architecture-decision-log`.
+- One branch per backlog item or logical change. Branch off the current default branch.
+- Never push to a branch other than the one you're working on without explicit permission.
+  *(Note: a managed/remote session may pre-assign and force a `claude/…` working branch;
+  that's the platform's doing, not this convention. When you choose a branch, follow the
+  rule above.)*
+
+### Commits
+- **No agent or AI signatures of any kind.** Do **not** add `Co-Authored-By: Claude`,
+  `Generated with…`, session links, model identifiers, or any trailer that marks the
+  commit as machine-made. Commits are attributed to the human author, full stop.
+- One logical change per commit.
+- Message format: a concise **imperative subject** (≤ ~72 chars), a blank line, then a body
+  that explains **why** when the why isn't obvious from the diff — same principle as code
+  comments (§0.2). Describe the reasoning and trade-off, not a restatement of the diff.
+- Keep generated artifacts (`types.ts`, lockfiles) consistent with their sources **in the
+  same commit** — never split a contract change from its regenerated output.
+
+### Pull requests
+- Do **not** open a PR unless the owner explicitly asks.
+- When asked: title in the same imperative style; body states **what changed, why, and how
+  it was verified** (which tests/properties hold). No AI-attribution footers here either.
+- Link the backlog item(s) the PR closes.
 
 ---
 

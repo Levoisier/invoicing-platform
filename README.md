@@ -2,7 +2,7 @@
 
 > Self-hostable invoicing where **the tax engine is a plugin**. Ship a core; add the module a client's country needs. v1.0.0 ships the core plus one plugin: **Colombia (CO / IVA)**.
 
-This README is the **single source of context** for the project. Agents and contributors should read it before generating a backlog or writing code. Deeper architecture lives in [`docs/architecture.md`](docs/architecture.md); the plugin SDK in [`docs/plugin-sdk.md`](docs/plugin-sdk.md).
+This README is the **single source of context** for the project. Agents and contributors should read it before generating a backlog or writing code. Deeper architecture lives in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md); the plugin SDK in [`docs/plugin-sdk.md`](docs/plugin-sdk.md).
 
 ---
 
@@ -105,7 +105,7 @@ invoicing-platform/
 │   └── alembic/                # alembic.ini + env.py aggregating module migrations
 │
 └── docs/
-    ├── architecture.md         # deep architecture + decision record
+    ├── ARCHITECTURE.md         # deep architecture + decision record
     └── plugin-sdk.md           # "write a tax plugin in ~50 lines"
 ```
 
@@ -181,7 +181,7 @@ The natural dependency spine. Each item is a self-contained work unit; later ite
 13. **`module-payments`** — payment + ledger, **atomic** with invoice status; plus the "break it out-of-process" demonstration test.
 14. **Contract generation** — OpenAPI → `openapi-typescript` → `apps/web/lib/types.ts`, wired into the Makefile.
 15. **`apps/web`** — client + invoice screens, mark-paid, PDF download, against generated types.
-16. **Packaging** — Dockerfiles, compose, README run instructions, `docs/architecture.md`, `docs/plugin-sdk.md`.
+16. **Packaging** — Dockerfiles, compose, README run instructions, `docs/ARCHITECTURE.md`, `docs/plugin-sdk.md`.
 
 ---
 
@@ -210,7 +210,7 @@ A user can, from a clean `docker compose up`:
 ### C. The output is real
 - A **valid PDF invoice** for a Colombian client with correct IVA — the tangible artifact you can show.
 - A running, self-hostable app (db + api + web) reachable in a browser.
-- `docs/architecture.md` (the decision record) and `docs/plugin-sdk.md` (how to write the next tax plugin).
+- `docs/ARCHITECTURE.md` (the decision record) and `docs/plugin-sdk.md` (how to write the next tax plugin).
 
 ### What "success" deliberately does NOT require
 Polished UI, real payment gateways, DIAN compliance, multi-tenancy, or a second jurisdiction. The bar is: **a correct, extensible, transactional core that issues a real Colombian invoice end to end, with the plugin seam demonstrably working.** Polish the core, not the buttons.
