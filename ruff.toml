@@ -1,0 +1,15 @@
+# One linter config for every Python package in the workspace. Kept deliberately
+# small: the value is consistency across packages, not a maximalist rule set.
+target-version = "py311"
+line-length = 100
+src = ["packages/*/src", "apps/api/src"]
+
+[lint]
+# A pragmatic core: pyflakes (F), pycodestyle (E/W), isort (I), pyupgrade (UP),
+# bugbear (B). Enough to catch real mistakes without bikeshedding style.
+select = ["E", "W", "F", "I", "UP", "B"]
+
+[lint.isort]
+# Our first-party packages, so imports group correctly and a stray
+# `import tax_co` in the core would stand out in review.
+known-first-party = ["nucleus", "invoicing", "payments", "tax_co", "app"]

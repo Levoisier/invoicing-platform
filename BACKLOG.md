@@ -24,7 +24,7 @@ The **Proves** column on some items points at the acceptance properties in `READ
 
 ---
 
-## B0 — Workspace + tooling  `[ ]`
+## B0 — Workspace + tooling  `[x]`
 Stand up the monorepo skeleton so everything else has a home.
 - uv workspace root (`pyproject.toml`, members = `apps/api` + `packages/*`), `uv.lock`.
 - `ruff.toml`, `docker-compose.yml` (Postgres + api + web), root `Makefile`

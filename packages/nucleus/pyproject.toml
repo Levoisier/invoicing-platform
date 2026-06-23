@@ -1,0 +1,24 @@
+[project]
+name = "nucleus"
+version = "0.1.0"
+description = "Reusable transactional core: primitives, DB/UoW, contracts, registry, module loader, event bus, API/auth."
+requires-python = ">=3.11"
+# The core's runtime deps. Deliberately framework-light: it owns transactions
+# (SQLAlchemy), validation/precision (Pydantic), the Postgres driver, and JWT for
+# the API gateway. It must NEVER depend on a module or a plugin — that inversion
+# is the whole project (CLAUDE.md §2).
+dependencies = [
+    "sqlalchemy>=2.0",
+    "pydantic>=2",
+    "psycopg[binary]>=3.1",
+    "pyjwt>=2.8",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# Dir is `packages/nucleus` (prefixed for legibility) but the import name is the
+# clean `nucleus`; point hatchling at the src-layout package explicitly.
+[tool.hatch.build.targets.wheel]
+packages = ["src/nucleus"]

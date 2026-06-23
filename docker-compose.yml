@@ -1,0 +1,52 @@
+# Local stack: db + api + web. v1 self-host target (README §8). The api/web image
+# builds are stubbed until B10/B14 — for now `make up` brings up Postgres alone,
+# which is all B0 needs. The service definitions are here so the topology is
+# visible from the start and later items fill in the Dockerfiles.
+
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-invoicing}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-invoicing}
+      POSTGRES_DB: ${POSTGRES_DB:-invoicing}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    # Gate dependents on real readiness, not just "container started" — otherwise
+    # the API races the DB on boot.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-invoicing}"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+  api:
+    # Built in B10 (infra/docker/Dockerfile.api). Declared now so the topology is
+    # complete; `profiles` keeps it out of the default `make up` until it exists.
+    profiles: ["full"]
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.api
+    env_file: .env
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+
+  web:
+    # Built in B14 (infra/docker/Dockerfile.web). Same staging as api.
+    profiles: ["full"]
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.web
+    env_file: .env
+    depends_on:
+      - api
+    ports:
+      - "3000:3000"
+
+volumes:
+  pgdata:
