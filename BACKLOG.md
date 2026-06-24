@@ -32,7 +32,7 @@ Stand up the monorepo skeleton so everything else has a home.
 - **Done when:** `make up` brings up Postgres; `make test` runs (even if empty); the
   package layout matches `README.md` §3.
 
-## B1 — `nucleus.primitives.money`  `[ ]`  · Proves: *Money correctness*
+## B1 — `nucleus.primitives.money`  `[x]`  · Proves: *Money correctness*
 `Money` value object with **per-currency precision** (COP = 0 decimals, not a hardcoded 2).
 - Mixing currencies in arithmetic **raises**, never silently coerces.
 - **Done when:** tests show COP rounds/renders at 0 decimals, a 2-decimal currency works,
