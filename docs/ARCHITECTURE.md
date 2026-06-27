@@ -131,6 +131,20 @@ Append a dated entry whenever you make or revise a structural decision. Keep it 
 
 <!-- Add decisions below, newest first. -->
 
+### 2026-06-27 — `nucleus.db`: unit-of-work as the single transaction boundary (B3)
+**Decision:** atomicity is expressed once, as a `unit_of_work` context manager that commits
+a block on clean exit and rolls the whole block back on any exception; the FastAPI
+`session_per_request` dependency wraps each request in one. Models share one declarative
+`Base`/`MetaData` carrying a pinned constraint **naming convention**. **Why:** every module
+inheriting one transaction policy is what makes "invoice status + ledger commit or roll
+back together" (B12) a property of the platform rather than something each module
+re-implements (and gets subtly wrong). The naming convention keeps Alembic autogenerate
+deterministic and downgrades (which drop constraints by name) safe. `expire_on_commit=False`
+on the sessionmaker lets routes serialize just-written objects after commit without a
+post-transaction reload. **Cost:** one-transaction-per-request couples a request's work into
+a single rollback unit (a deliberate trade — see §2.2); and the nucleus takes a DSN rather
+than reading env, so the host must wire config (it does, in B10).
+
 ### 2026-06-27 — Gapless `Sequence`: counter row + `SELECT FOR UPDATE`, not a native sequence (B2)
 **Decision:** numbering is a `sequences(key, value)` row bumped under a `SELECT … FOR
 UPDATE` row lock inside the caller's transaction — explicitly **not** a Postgres

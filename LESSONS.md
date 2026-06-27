@@ -38,6 +38,23 @@ or file when useful.
 
 <!-- Add new lessons below this line, newest first. -->
 
+## 2026-06-27 — Two non-obvious DB-layer defaults: constraint naming + expire_on_commit (B3)
+**Context:** Building `nucleus.db` (declarative `Base`, session factory, unit of work).
+**Surprise:** Two defaults that bite later, not now. (1) Without a `MetaData`
+**naming convention**, SQLAlchemy lets the database auto-name constraints/indexes; those
+names differ across engines and shift between Alembic autogenerate runs, so migrations get
+noisy and downgrades — which `DROP CONSTRAINT` *by name* — become unreliable. Set the
+convention on the `Base` metadata once, up front. (2) `sessionmaker`'s default
+`expire_on_commit=True` expires every loaded attribute on commit; a route that serializes
+the just-committed object into its response then triggers a reload *after* the request's
+transaction is gone. `expire_on_commit=False` avoids it.
+**Resolution:** Pinned a naming convention on `Base.metadata`; built the session factory
+with `expire_on_commit=False`. Neither changes behaviour today; both prevent a confusing
+failure in B10/B13.
+**Takeaway:** Decide constraint naming and commit-expiry at the moment you create the
+declarative base — retrofitting either after migrations and routes exist is the painful
+path.
+
 ## 2026-06-27 — Postgres native `SEQUENCE` can't do gapless; proving the lock needs real Postgres (B2)
 **Context:** Building `nucleus.primitives.sequence` and proving "no gaps, no duplicates
 under parallel workers."

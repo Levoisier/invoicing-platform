@@ -47,10 +47,14 @@ Gapless sequential generator backed by a **DB row lock** (must survive multiple 
   exactly `1..200`, and a companion test shows the lock-less read-then-write *does*
   duplicate. DB-backed tests skip cleanly when no Postgres is reachable.
 
-## B3 — `nucleus.db`  `[ ]`  · Proves: *Atomicity (foundation)*
+## B3 — `nucleus.db`  `[x]`  · Proves: *Atomicity (foundation)*
 Engine, session-per-request, declarative `base`, and a unit-of-work.
 - **Done when:** tests show a commit persists and a raised error inside the unit-of-work
   rolls everything back.
+- Done: `Base` (one MetaData + pinned naming convention), `make_engine`,
+  `make_session_factory`, `session_per_request` (FastAPI dep, mounted in B10), and
+  `unit_of_work`. Tests prove a clean block commits, a raised error rolls back, and a
+  late failure un-persists earlier flushed writes in the same unit.
 
 ## B4 — `nucleus.registry` + `nucleus.contracts`  `[ ]`  · Proves: *Plugin inversion (foundation)*
 Model / route / event / tax / payment registries; `TaxCalculator` and `PaymentProvider`
