@@ -131,6 +131,17 @@ Append a dated entry whenever you make or revise a structural decision. Keep it 
 
 <!-- Add decisions below, newest first. -->
 
+### 2026-06-27 — Gapless `Sequence`: counter row + `SELECT FOR UPDATE`, not a native sequence (B2)
+**Decision:** numbering is a `sequences(key, value)` row bumped under a `SELECT … FOR
+UPDATE` row lock inside the caller's transaction — explicitly **not** a Postgres
+`SEQUENCE`. **Why:** native sequences cache and never roll back, so they leave gaps; DIAN
+(and most invoice law) forbids gaps. The lock lives in the DB, so it serializes across API
+workers, which an app-level counter cannot. **Cost:** issuing a number is serialized
+per-key (contention on the hot row) and the primitive is Postgres-specific (`FOR UPDATE`).
+Both are accepted: gaplessness is a legal requirement, and the platform already targets
+Postgres. The counter table uses a private `MetaData`, not the (not-yet-existing) nucleus
+declarative base; B3/B8 fold it into the unified metadata without changing the API.
+
 ### 2026-06-23 — Initial architecture recorded
 Captured the two load-bearing decisions (plugin inversion, transactional intimacy) and the
 supporting choices straight from the README, before any code exists. **Why now:** so the

@@ -38,6 +38,29 @@ or file when useful.
 
 <!-- Add new lessons below this line, newest first. -->
 
+## 2026-06-27 — Postgres native `SEQUENCE` can't do gapless; proving the lock needs real Postgres (B2)
+**Context:** Building `nucleus.primitives.sequence` and proving "no gaps, no duplicates
+under parallel workers."
+**Surprise:** Two things. (1) A Postgres `SEQUENCE`/`SERIAL` is the obvious tool and the
+wrong one — it *caches* values and deliberately does **not** roll back on a failed
+transaction, so it leaves gaps. Gapless numbering must be a counter *row* taken under
+`SELECT … FOR UPDATE`, tied to the caller's transaction. (2) The property can't be proven
+on SQLite: it serializes writes at the database level and treats `FOR UPDATE` as a no-op,
+so a green SQLite test would prove nothing about the row lock. You need real Postgres with
+real threads/connections. The build sandbox has no Docker daemon (see B0 lesson), but the
+`postgresql-16` binaries are installed — you can `initdb` + `pg_ctl start` a throwaway
+cluster **as the `postgres` user** (Postgres refuses to run as root) on a high port and
+point `DATABASE_URL` at it.
+**Resolution:** Row + `FOR UPDATE`; threaded test asserts the issued set equals `1..N`
+exactly; a Barrier-coordinated lock-less variant proves duplicates appear without the lock,
+so we know the lock is load-bearing. The `pg_engine` fixture skips when no Postgres is
+reachable, so `make test` stays green on a laptop without a DB and only proves the property
+when one is up (`make up`).
+**Takeaway:** Don't reach for `SERIAL` when the requirement is *gapless* — it's the wrong
+guarantee. And when a property only holds under real DB locking, test it against real
+Postgres or don't claim it; a local `initdb` cluster (run as `postgres`) is enough when
+Docker isn't.
+
 ## 2026-06-23 — uv virtual workspace root + cross-package sources (B0)
 **Context:** Standing up the uv workspace so `apps/api` can depend on the in-repo
 `nucleus`/`invoicing`/`payments`/`tax_co` packages by clean import name.

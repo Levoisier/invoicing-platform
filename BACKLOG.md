@@ -38,10 +38,14 @@ Stand up the monorepo skeleton so everything else has a home.
 - **Done when:** tests show COP rounds/renders at 0 decimals, a 2-decimal currency works,
   and cross-currency ops raise.
 
-## B2 — `nucleus.primitives.sequence`  `[ ]`  · Proves: *Gapless numbering*
+## B2 — `nucleus.primitives.sequence`  `[x]`  · Proves: *Gapless numbering*
 Gapless sequential generator backed by a **DB row lock** (must survive multiple workers).
 - **Done when:** a concurrency test issues numbers in parallel and shows **no gaps, no
   duplicates**.
+- Done: `Sequence` issues numbers via a `sequences` counter row under `SELECT … FOR
+  UPDATE`; a threaded test draws 8×25 numbers in parallel and asserts the issued set is
+  exactly `1..200`, and a companion test shows the lock-less read-then-write *does*
+  duplicate. DB-backed tests skip cleanly when no Postgres is reachable.
 
 ## B3 — `nucleus.db`  `[ ]`  · Proves: *Atomicity (foundation)*
 Engine, session-per-request, declarative `base`, and a unit-of-work.

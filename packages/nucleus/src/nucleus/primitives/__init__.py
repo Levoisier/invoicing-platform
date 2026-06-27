@@ -4,5 +4,6 @@ every module build on. Implemented across BACKLOG B1–B2.
 """
 
 from nucleus.primitives.money import CurrencyMismatchError, Money
+from nucleus.primitives.sequence import Sequence, ensure_schema, sequences
 
-__all__ = ["CurrencyMismatchError", "Money"]
+__all__ = ["CurrencyMismatchError", "Money", "Sequence", "ensure_schema", "sequences"]
