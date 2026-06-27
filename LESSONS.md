@@ -38,6 +38,19 @@ or file when useful.
 
 <!-- Add new lessons below this line, newest first. -->
 
+## 2026-06-27 — Sharing a helper module between tests: absolute import, not relative (B4)
+**Context:** The B4 registry test needs a fake plugin in its *own* module (so the consumer
+provably never imports the implementation). Put it in `packages/nucleus/tests/_fake_tax_plugin.py`.
+**Surprise:** `from ._fake_tax_plugin import …` fails — `packages/nucleus/tests` has no
+`__init__.py`, so pytest's default `prepend` import mode loads the test as a *top-level*
+module with no parent package, and the relative import has nothing to resolve against.
+`apps/api/tests` *is* a package (it has `__init__.py`), which masks the asymmetry.
+**Resolution:** Use a plain absolute import (`from _fake_tax_plugin import …`); prepend mode
+puts the test's own directory on `sys.path`, so a sibling module imports directly. Keep
+shared-fixture module names unique across test dirs to avoid collisions.
+**Takeaway:** In a src-layout repo where test dirs aren't packages, import sibling test
+helpers absolutely, not relatively — relative imports need an `__init__.py` that isn't there.
+
 ## 2026-06-27 — Two non-obvious DB-layer defaults: constraint naming + expire_on_commit (B3)
 **Context:** Building `nucleus.db` (declarative `Base`, session factory, unit of work).
 **Surprise:** Two defaults that bite later, not now. (1) Without a `MetaData`

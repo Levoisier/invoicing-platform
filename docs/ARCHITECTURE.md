@@ -131,6 +131,21 @@ Append a dated entry whenever you make or revise a structural decision. Keep it 
 
 <!-- Add decisions below, newest first. -->
 
+### 2026-06-27 — `nucleus.registry` + `nucleus.contracts`: the inversion seam (B4)
+**Decision:** contracts are `runtime_checkable` `Protocol`s (`TaxCalculator`,
+`PaymentProvider`) in the core; implementations register into a generic `Registry` keyed by
+a string (jurisdiction, provider key) and are resolved by key, never imported. Registries
+are **module-level singletons** (`tax`, `payment`, `model`, `route`). **Why Protocols, not
+ABCs:** structural typing lets an external plugin satisfy the contract without importing the
+core's base class — the dependency only ever points plugin→core, never core→plugin.
+**Why singletons:** registration is global, one-time boot wiring (entry-point discovery,
+B9) and every consumer must see one shared table. **Why no `event` registry:** pub/sub is
+one-event-to-many-subscribers — a different shape the B6 bus owns; faking it as a key→value
+registry now would mislead. **Cost:** (1) a missing implementation is a *runtime* miss, so
+we invest in loud, specific errors ("no TaxCalculator registered for jurisdiction 'CO'");
+(2) singletons hold global state, so tests must `clear()` them — the price of the shared
+table.
+
 ### 2026-06-27 — `nucleus.db`: unit-of-work as the single transaction boundary (B3)
 **Decision:** atomicity is expressed once, as a `unit_of_work` context manager that commits
 a block on clean exit and rolls the whole block back on any exception; the FastAPI

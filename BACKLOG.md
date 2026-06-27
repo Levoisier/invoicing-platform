@@ -56,11 +56,17 @@ Engine, session-per-request, declarative `base`, and a unit-of-work.
   `unit_of_work`. Tests prove a clean block commits, a raised error rolls back, and a
   late failure un-persists earlier flushed writes in the same unit.
 
-## B4 — `nucleus.registry` + `nucleus.contracts`  `[ ]`  · Proves: *Plugin inversion (foundation)*
+## B4 — `nucleus.registry` + `nucleus.contracts`  `[x]`  · Proves: *Plugin inversion (foundation)*
 Model / route / event / tax / payment registries; `TaxCalculator` and `PaymentProvider`
 Protocols.
 - **Done when:** a fake calculator can register under a jurisdiction and be resolved from
   the registry with **no direct import** by the consumer.
+- Done: `runtime_checkable` `TaxCalculator`/`PaymentProvider` Protocols; a generic
+  `Registry` (clear errors on missing/duplicate keys) with module-level `tax`/`payment`/
+  `model`/`route` singletons. Event pub/sub is deferred to the B6 bus (different shape),
+  not a plain registry. Test resolves a fake calculator (in its own module) via the
+  registry — the consumer imports no implementation — and a missing jurisdiction raises
+  the clear error B9 builds on.
 
 ## B5 — `nucleus.modules` loader  `[ ]`
 Manifest format, dependency **toposort**, per-module migration runner, install/upgrade
