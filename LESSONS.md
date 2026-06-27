@@ -38,6 +38,22 @@ or file when useful.
 
 <!-- Add new lessons below this line, newest first. -->
 
+## 2026-06-27 — Atomic boot depends on Postgres transactional DDL (B5)
+**Context:** The module loader runs every module's `migrate` inside one unit of work so a
+failed boot rolls back with no half-installed schema, and a test asserts the
+`installed_modules` ledger is empty after a mid-load failure.
+**Surprise:** This property is *not* portable. It works because Postgres wraps DDL
+(`CREATE TABLE`, etc.) in the transaction and rolls it back like any other statement. MySQL
+(and others) **auto-commit DDL**, which would leave the first module's tables behind even
+after the unit of work "rolls back" — the atomic-boot guarantee silently evaporates there.
+**Resolution:** Kept the one-transaction boot (we're Postgres-only, same call as the gapless
+row lock in B2) and recorded the dependency. Also: `metadata.create_all(engine, ...)` for
+the ledger table runs on its *own* connection and commits independently of the session's
+transaction — which is what we want (the ledger table should exist regardless), but it's a
+trap if you ever assume create_all participates in the surrounding transaction.
+**Takeaway:** "Migrations are atomic" is a Postgres property, not a SQL one. Any future
+second-database support has to re-prove it, not assume it.
+
 ## 2026-06-27 — Sharing a helper module between tests: absolute import, not relative (B4)
 **Context:** The B4 registry test needs a fake plugin in its *own* module (so the consumer
 provably never imports the implementation). Put it in `packages/nucleus/tests/_fake_tax_plugin.py`.

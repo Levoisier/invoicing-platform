@@ -68,11 +68,17 @@ Protocols.
   registry — the consumer imports no implementation — and a missing jurisdiction raises
   the clear error B9 builds on.
 
-## B5 — `nucleus.modules` loader  `[ ]`
+## B5 — `nucleus.modules` loader  `[x]`
 Manifest format, dependency **toposort**, per-module migration runner, install/upgrade
 lifecycle.
 - **Done when:** two fake modules with a declared dependency load in correct order; a
   cycle is rejected with a clear error.
+- Done: `ModuleManifest` (name/version/depends + `migrate`/`register` hooks), a
+  deterministic DFS `toposort` (cycle/missing/duplicate raise with the path), and a
+  version-gated lifecycle backed by an `installed_modules` ledger (install → unchanged →
+  upgrade). `load_modules` runs the whole set in the caller's unit of work, so a failed
+  boot rolls back every migration. Tests prove ordering, cycle rejection, migrate-once-per-
+  version, and atomic rollback of a failed boot.
 
 ## B6 — `nucleus.events.bus`  `[ ]`
 In-process event bus (publish/subscribe within the shared transaction).

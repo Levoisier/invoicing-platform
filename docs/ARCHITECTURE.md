@@ -131,6 +131,25 @@ Append a dated entry whenever you make or revise a structural decision. Keep it 
 
 <!-- Add decisions below, newest first. -->
 
+### 2026-06-27 — `nucleus.modules` loader: two-phase lifecycle, atomic boot (B5)
+**Decision:** a module is a `ModuleManifest` (name, version, `depends`, and two hooks);
+`load_modules` toposorts the set, then for each module runs a **schema phase** (`migrate`,
+gated by a DB `installed_modules` ledger so it runs once per version) and a **runtime
+phase** (`register`, every boot). The whole load runs inside the caller's unit of work.
+**Why two phases:** migrations are persistent and must run once per version; router/registry
+wiring lives in process memory and must re-run every start. Collapsing them re-migrates on
+every boot or drops wiring after a restart. **Why a DB ledger, not a file/memory:** the
+truth about what schema exists is in the database, and multiple API workers must agree on
+it. **Why depend by *name*, not import:** a module never imports a peer — the loader
+resolves order from the set it's given, preserving the one-directional dependency rule.
+**Why one transaction for the whole boot:** a module failing mid-load rolls back every
+prior migration and ledger row, so there's no half-installed state to hand-repair. **Cost:**
+(1) the version gate treats *any* version difference as "run migrate" — it doesn't reason
+about up/down, so the hook owns reaching its version; (2) running all migrations in one
+transaction means a huge migration set is one big lock — fine at this scale, revisit if
+boots get heavy; (3) concurrent workers booting at once could race the ledger — the host
+runs the loader once at startup (the `make migrate` seam), which sidesteps it for v1.
+
 ### 2026-06-27 — `nucleus.registry` + `nucleus.contracts`: the inversion seam (B4)
 **Decision:** contracts are `runtime_checkable` `Protocol`s (`TaxCalculator`,
 `PaymentProvider`) in the core; implementations register into a generic `Registry` keyed by
