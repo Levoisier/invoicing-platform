@@ -80,10 +80,16 @@ lifecycle.
   boot rolls back every migration. Tests prove ordering, cycle rejection, migrate-once-per-
   version, and atomic rollback of a failed boot.
 
-## B6 — `nucleus.events.bus`  `[ ]`
+## B6 — `nucleus.events.bus`  `[x]`
 In-process event bus (publish/subscribe within the shared transaction).
 - **Done when:** a published event reaches its subscriber; semantics around the
   transaction boundary are documented in `docs/ARCHITECTURE.md`.
+- Done: `EventBus` (+ module-level `bus` singleton). `publish(event, session)` is
+  synchronous, exact-type dispatch, on the publisher's session — so a subscriber's writes
+  share the trigger's transaction. Handler exceptions propagate (never swallowed) so a unit
+  of work rolls the whole reaction back. Transaction-boundary semantics recorded in
+  `docs/ARCHITECTURE.md` §3 + decision log. Tests prove delivery/ordering/exact-type
+  dispatch and the commit-together / roll-back-together property against Postgres.
 
 ## B7 — `nucleus.api`  `[ ]`
 API gateway helpers + JWT auth.

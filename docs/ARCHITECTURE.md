@@ -99,6 +99,17 @@ exists, not just that it's followed.
   `infra/alembic/env.py` aggregates them and the loader runs them in **toposort** order so
   a module's tables exist before a dependent module's. Keeps modules self-contained while
   giving the host one coherent migration run.
+- **Event bus is synchronous and in-transaction, not a queue.** `publish(event, session)`
+  calls each subscriber immediately, in the publisher's call stack, on the publisher's
+  session. So a subscriber's DB writes are in the **same transaction** as the trigger and
+  commit or roll back with it; a subscriber that raises propagates and aborts the whole
+  unit of work (trigger + every handler). This is deliberately *not* a message queue: no
+  async, no retries, no eventual consistency, and handlers observe the trigger's still-
+  uncommitted state (correct — same txn). The cost: subscribers are on the publisher's
+  critical path (keep them fast) and anything that must run **only after commit** (email,
+  webhooks, DIAN submission) is explicitly out of scope for this bus — that's a future
+  out-of-process concern. Dispatch is by **exact** event type, handlers fire in
+  subscription order; those are the only delivery guarantees made.
 - **Generated API types (`apps/web/lib/types.ts`).** The frontend's types are **emitted
   from the live OpenAPI schema** via `openapi-typescript`. Hand-editing them would let the
   contract and the client drift silently; generation makes drift a build step, not a bug.
@@ -130,6 +141,20 @@ Append a dated entry whenever you make or revise a structural decision. Keep it 
 **decision · why · cost.** Newest on top.
 
 <!-- Add decisions below, newest first. -->
+
+### 2026-06-27 — `nucleus.events.bus`: synchronous, in-transaction delivery (B6)
+**Decision:** the event bus delivers synchronously, in-process, on the publisher's session
+(`publish(event, session)`); exact-type dispatch, handlers in subscription order, exceptions
+**not** caught. **Why:** the project's thesis is cross-module atomicity. If a subscriber's
+writes weren't in the trigger's transaction, "invoice status + ledger commit together"
+(B12) would be a lie — payments will subscribe to an invoicing event and post ledger
+entries in the *same* unit of work. Synchronous same-session delivery is the only thing that
+makes that true. Not catching handler errors is part of the contract: propagation is what
+lets the unit of work roll the whole reaction back. **Cost / boundary (see §3):** subscribers
+are on the critical path; there is no async, retry, or after-commit hook — post-commit side
+effects (email, DIAN) are a future out-of-process mechanism, not this bus. Exact-type
+dispatch (no subclass matching) keeps delivery predictable but means a base-type subscription
+won't catch subtypes — revisit only if a real need appears.
 
 ### 2026-06-27 — `nucleus.modules` loader: two-phase lifecycle, atomic boot (B5)
 **Decision:** a module is a `ModuleManifest` (name, version, `depends`, and two hooks);
