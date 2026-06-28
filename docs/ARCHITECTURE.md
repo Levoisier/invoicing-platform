@@ -124,9 +124,11 @@ exists, not just that it's followed.
 ## 4. Known risks & sanctioned fallbacks
 
 - **WeasyPrint native deps (Pango/cairo)** can fight the Docker image. The README sanctions
-  a fallback to headless-Chromium print or ReportLab. If you take it, **record why here**
-  and in `LESSONS.md` — a future reader needs to know the PDF path changed and what forced
-  it.
+  a fallback to headless-Chromium print or ReportLab. **Resolved (B11):** the deps
+  (libpango, libcairo, libharfbuzz) are present in our image and WeasyPrint renders cleanly,
+  so we kept WeasyPrint and took **no fallback**. The packaging Dockerfile (B15) must keep
+  those system libs installed; if a future base image drops them and they can't be re-added,
+  that's when the sanctioned fallback comes into play (record it here then).
 - **CO/IVA rates drift.** v1 targets *correct architecture with plausible rates*, not
   certified DIAN compliance. Verify rates against current regulation before presenting
   output as accounting-grade.
@@ -141,6 +143,24 @@ Append a dated entry whenever you make or revise a structural decision. Keep it 
 **decision · why · cost.** Newest on top.
 
 <!-- Add decisions below, newest first. -->
+
+### 2026-06-28 — PDF via WeasyPrint (HTML/CSS), no fallback needed (B11)
+**Decision:** invoices render as HTML/CSS (a Jinja2 template) → PDF via WeasyPrint, in
+`invoicing.pdf`; `GET /invoices/{id}/pdf` serves it. The IVA breakdown comes from a new
+`tax_breakdown` service function that groups lines by tax code into (base, tax) buckets,
+resolved through the registry like `compute_totals`. **Why HTML/CSS→PDF:** an invoice is a
+styled page; authoring it in HTML/CSS is far more maintainable than drawing primitives in
+code (the ReportLab style), and it's the README's pick. **Why no fallback:** the README
+sanctioned ReportLab/headless-Chromium if WeasyPrint's native deps fought the image — they
+don't; libpango/cairo/harfbuzz are present and it renders, so adding a fallback would be
+complexity with no cause. **Why an inline template string, not a file:** one document doesn't
+justify wheel package-data wiring; the template lives in `pdf.py` with autoescape on (line
+descriptions/names are user data). **Money on the artifact** goes through `Money.__str__`, so
+COP shows 0 decimals — the visible proof of the per-currency primitive. **Cost / watch:** (1)
+WeasyPrint pulls system libs, so the B15 Dockerfile must install them (noted in §4); (2)
+tests assert PDF *text* via pypdf (a dev dep) — robust here, but text extraction can be
+brittle if the template moves to exotic fonts; (3) no issuer/branding entity yet — the
+template shows the client and totals, not a sender letterhead (v1 scope).
 
 ### 2026-06-28 — `module-payments`: atomicity proven, via a downward import not the bus (B12)
 **Decision:** `record_payment` writes the payment, its balanced double-entry ledger, and the

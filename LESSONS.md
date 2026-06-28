@@ -38,6 +38,22 @@ or file when useful.
 
 <!-- Add new lessons below this line, newest first. -->
 
+## 2026-06-28 — WeasyPrint just worked here; verify deps before assuming the fallback (B11)
+**Context:** B11's PDF step. The README and CLAUDE.md §3 both pre-warn that WeasyPrint's
+native deps (Pango/cairo) often fight the image, and sanction a ReportLab/headless-Chromium
+fallback.
+**Surprise:** No fight at all — `ldconfig -p` already listed libpango/libcairo/libharfbuzz,
+and `uv run --with weasyprint python -c "import weasyprint"` imported and rendered a PDF
+first try. The pre-warned hazard wasn't present in this environment.
+**Resolution:** Kept WeasyPrint, took no fallback, and recorded that the B15 Dockerfile must
+keep those system libs so the assumption holds in the shipped image. Also: tests assert PDF
+*content* (NIT, totals, "no .00") by extracting text with pypdf — much stronger than checking
+the `%PDF-` magic bytes alone.
+**Takeaway:** A documented hazard is a prompt to *probe*, not to pre-emptively detour. A
+two-minute `ldconfig`/import check settled it; reaching for the fallback first would have
+added ReportLab complexity for a problem we didn't have. Verify before you trust — including
+trusting the warning.
+
 ## 2026-06-28 — Event-bus decoupling can't beat the dependency direction (B12)
 **Context:** The payments stub said it should "cooperate with invoicing through the event
 bus, not a hard import." Tried to honor that for recording a payment (which must move invoice

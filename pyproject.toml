@@ -21,6 +21,8 @@ tax_co = { workspace = true }
 dev = [
     "pytest>=8",
     "httpx2>=0.28",
+    # Used only by tests to read back generated PDFs and assert their text content.
+    "pypdf>=4",
 ]
 
 # Discover tests anywhere a package keeps them (apps/api/tests today, packages/*/

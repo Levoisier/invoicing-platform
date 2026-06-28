@@ -13,10 +13,11 @@ from __future__ import annotations
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from pydantic import BaseModel
 
 from invoicing.models import Invoice, Party
+from invoicing.pdf import render_invoice_pdf
 from invoicing.service import LineInput, compute_totals, issue_invoice
 from nucleus.api import get_principal, get_session
 from nucleus.registry import RegistryError
@@ -168,3 +169,21 @@ def get_invoice(
     if invoice is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, f"invoice {invoice_id} not found")
     return _invoice_out(invoice, compute_totals(invoice))
+
+
+@router.get("/invoices/{invoice_id}/pdf")
+def download_invoice_pdf(
+    invoice_id: int,
+    session: Session = Depends(get_session),
+    _principal: object = Depends(get_principal),
+) -> Response:
+    invoice = session.get(Invoice, invoice_id)
+    if invoice is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, f"invoice {invoice_id} not found")
+    pdf = render_invoice_pdf(invoice)
+    # inline filename so a browser names the download sensibly.
+    return Response(
+        content=pdf,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="invoice-{invoice.number}.pdf"'},
+    )

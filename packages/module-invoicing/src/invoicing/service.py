@@ -95,3 +95,31 @@ def compute_totals(
         subtotal = subtotal + net
         tax = tax + calculator.tax_for(net, line.tax_code)
     return InvoiceTotals(subtotal=subtotal, tax=tax, total=subtotal + tax)
+
+
+@dataclass(frozen=True)
+class TaxBucket:
+    """Net base and tax for one tax code — a row of the invoice's IVA breakdown."""
+
+    code: str
+    base: Money
+    tax: Money
+
+
+def tax_breakdown(
+    invoice: Invoice, *, tax_registry: Registry[str, TaxCalculator] = _tax_registry
+) -> list[TaxBucket]:
+    """Group the invoice by tax code into (base, tax) buckets — the IVA breakdown a
+    Colombian invoice must show (base gravable per rate). Resolved via the registry,
+    like compute_totals; sorted by code for stable rendering."""
+    calculator = tax_registry.get(invoice.party.jurisdiction)
+    zero = Money(0, invoice.currency)
+    bases: dict[str, Money] = {}
+    taxes: dict[str, Money] = {}
+    for line in invoice.lines:
+        net = line.net()
+        bases[line.tax_code] = bases.get(line.tax_code, zero) + net
+        taxes[line.tax_code] = taxes.get(line.tax_code, zero) + calculator.tax_for(
+            net, line.tax_code
+        )
+    return [TaxBucket(code, bases[code], taxes[code]) for code in sorted(bases)]

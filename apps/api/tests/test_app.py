@@ -131,3 +131,28 @@ def test_record_payment_marks_invoice_paid_over_http(client: TestClient) -> None
 
     fetched = client.get(f"/invoices/{invoice['id']}", headers=auth)
     assert fetched.json()["status"] == "paid"
+
+
+def test_download_invoice_pdf_over_http(client: TestClient) -> None:
+    auth = {"Authorization": f"Bearer {_token(client)}"}
+    client_id = client.post(
+        "/clients",
+        json={"name": "Acme", "tax_id": "900.123.456-7", "jurisdiction": "CO"},
+        headers=auth,
+    ).json()["id"]
+    invoice = client.post(
+        "/invoices",
+        json={
+            "client_id": client_id,
+            "currency": "COP",
+            "lines": [{"description": "Consulting", "quantity": "1", "unit_price": "1000000",
+                       "tax_code": "iva_19"}],
+        },
+        headers=auth,
+    ).json()
+
+    resp = client.get(f"/invoices/{invoice['id']}/pdf", headers=auth)
+    assert resp.status_code == 200
+    assert resp.headers["content-type"] == "application/pdf"
+    assert f"invoice-{invoice['number']}.pdf" in resp.headers["content-disposition"]
+    assert resp.content[:5] == b"%PDF-"  # a real, downloadable PDF
