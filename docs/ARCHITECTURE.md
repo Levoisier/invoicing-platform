@@ -142,6 +142,26 @@ Append a dated entry whenever you make or revise a structural decision. Keep it 
 
 <!-- Add decisions below, newest first. -->
 
+### 2026-06-28 — `apps/api` bootstrap: compose the edition at runtime (B10)
+**Decision:** `create_app()` is the composition root: clear the shared registries, discover
+tax plugins from entry points, load modules (toposort + migrate) in one unit of work, then
+mount the routers modules published to the route registry. Module routes declare the nucleus
+seams `get_session`/`get_principal`; the host fills them with `app.dependency_overrides`
+(session-per-request, and the configured `JWTAuth`). **Why dependency_overrides:** it's the
+registry inversion at the HTTP layer — a module's route asks for "a session"/"the caller" by
+name and the host supplies the concrete dependency, so a module holds no engine or secret and
+stays host-agnostic. **Why clear registries at boot:** bootstrap builds a composition from
+scratch, so re-composing (a second app in one test process) is idempotent rather than
+tripping duplicate-registration guards. **Why migrate inside create_app:** the first
+end-to-end slice needs the schema present; one unit of work keeps the boot atomic (B5).
+**Cost / sharp edges:** (1) `create_app` touches the DB (runs migrations), so importing
+`app.main` requires a reachable database — tests build their own app against a test DB rather
+than importing `app.main`; (2) migrating on app construction means every worker would migrate
+on startup — fine for single-process dev, but production wants a dedicated migrate step
+(`make migrate`) run once before scaling out (the B5 concurrency note); (3) login compares a
+plaintext credential from settings — adequate for v1 single-user dev, flagged for hashing
+later.
+
 ### 2026-06-28 — `plugin-tax-co` + discovery: the inversion, proven end to end (B9)
 **Decision:** `ColombiaTaxCalculator` lives in its own package and self-registers via the
 `nucleus.plugins` entry point; `nucleus.plugins.discover_plugins()` loads that group,

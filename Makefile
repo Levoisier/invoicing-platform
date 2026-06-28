@@ -21,10 +21,12 @@ sync:
 dev: up
 	uv run uvicorn app.main:app --reload --app-dir apps/api/src
 
-# Run all module migrations in dependency (toposort) order. Wired in B10 once the
-# host's bootstrap exists; today it's a no-op placeholder so the contract is named.
+# Run all module migrations in dependency (toposort) order. The host's bootstrap
+# (create_app, B10) already migrates on startup; building the app applies them. A
+# dedicated single-shot migrate entrypoint (so workers don't each migrate at scale)
+# is a later refinement.
 migrate:
-	@echo "migrate: no migrations yet (wired in B10)"
+	uv run python -c "from app.bootstrap import create_app; create_app()" && echo "migrate: modules migrated via bootstrap"
 
 # Emit OpenAPI from FastAPI and regenerate the frontend's typed client. The one
 # Make target that owns apps/web/lib/types.ts (README §7.B: contract honesty).

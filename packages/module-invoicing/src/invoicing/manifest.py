@@ -7,7 +7,10 @@ production path once tables start evolving (README §2). Migration runs on the
 loader's *session connection*, so it's part of the same atomic boot as every other
 module (B5).
 
-No ``register`` hook yet: routes are mounted by the host in B10.
+The ``register`` hook publishes this module's router into the route registry; the
+host mounts everything in the registry at boot (B10). It runs on every boot
+(routers live in process memory), so it registers with ``replace=True`` to be
+idempotent across re-composition (e.g. a second app in the same test process).
 """
 
 from __future__ import annotations
@@ -16,6 +19,7 @@ from invoicing.models import Invoice, InvoiceLine, Party
 from nucleus.db import Base
 from nucleus.modules import ModuleContext, ModuleManifest
 from nucleus.primitives import ensure_schema as ensure_sequence_schema
+from nucleus.registry import route
 
 
 def _migrate(ctx: ModuleContext) -> None:
@@ -30,4 +34,12 @@ def _migrate(ctx: ModuleContext) -> None:
     )
 
 
-manifest = ModuleManifest(name="invoicing", version="1", migrate=_migrate)
+def _register(ctx: ModuleContext) -> None:
+    # Imported here, not at module top: the router pulls in FastAPI/Pydantic, which
+    # only the running host needs — keeps `import invoicing.manifest` light.
+    from invoicing.api import router
+
+    route.register("invoicing", router, replace=True)
+
+
+manifest = ModuleManifest(name="invoicing", version="1", migrate=_migrate, register=_register)

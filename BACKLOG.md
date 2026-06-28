@@ -125,11 +125,18 @@ API gateway helpers + JWT auth.
   (no `import tax_co`). Tests prove rates, real entry-point self-registration, correct totals
   via the plugin, and that an empty registry (plugin removed) fails with the clear error.
 
-## B10 — `apps/api` host (bootstrap)  `[ ]`
+## B10 — `apps/api` host (bootstrap)  `[x]`
 `bootstrap.py`: discover modules → toposort → migrate → mount routers/plugins. First
 end-to-end vertical slice.
 - **Done when:** `GET /docs` is live and the create-client → create-invoice slice works
   over HTTP.
+- Done: `create_app()` clears the shared registries, discovers tax plugins from entry
+  points, loads modules (toposort + migrate) in one unit of work, then mounts the routers
+  modules published into the route registry. Module routes declare nucleus seams
+  (`get_session`/`get_principal`) that the host fills via `dependency_overrides`. Added the
+  invoicing router (`/clients`, `/invoices`, `/invoices/{id}`) and a `/auth/token` login.
+  E2E test: log in → create client → create CO invoice → read back, asserting plugin IVA
+  totals; `/docs` live; domain routes 401 without a token.
 
 ## B11 — PDF generation  `[ ]`  · Proves: *The output is real*
 Invoice → HTML template → PDF (WeasyPrint). Shows line items, IVA breakdown, totals,

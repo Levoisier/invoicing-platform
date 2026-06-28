@@ -38,6 +38,24 @@ or file when useful.
 
 <!-- Add new lessons below this line, newest first. -->
 
+## 2026-06-28 — Mounting module routes the host hasn't configured: dependency_overrides (B10)
+**Context:** Modules define FastAPI routes, but the engine and auth secret live in the host.
+The route can't import the host's session factory without inverting the dependency.
+**Surprise/technique:** FastAPI's `app.dependency_overrides` is the clean seam. The module
+declares `Depends(get_session)` / `Depends(get_principal)` against *placeholder* functions
+exported by the nucleus (which just raise "not configured"); the host swaps them for the real
+session-per-request and authenticator at boot. The module stays host-agnostic, and an
+unconfigured placeholder fails loudly instead of silently. Second gotcha: once `create_app`
+runs migrations, `app.main:app` touches the DB *at import* — so tests must build the app via
+`create_app` against a test DB, not `from app.main import app` (which would need a DB just to
+collect). Third: registry/route singletons persist across `create_app` calls in one process,
+so bootstrap must `clear()` them to stay idempotent (or register hooks must use `replace`).
+**Resolution:** placeholder deps + overrides; tests call `create_app`; bootstrap clears
+registries before composing.
+**Takeaway:** Inversion at the HTTP layer is `dependency_overrides`, the same shape as the
+registry for plugins — module asks by name, host supplies. And watch what runs at *import*
+time once the app does real work at construction.
+
 ## 2026-06-28 — CO IVA rates verified; "excluded" ≠ "exempt" but we fold them (B9)
 **Context:** Building the CO tax plugin; CLAUDE.md §3 requires verifying rates against current
 DIAN rules, not memory.
