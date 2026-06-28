@@ -142,6 +142,24 @@ Append a dated entry whenever you make or revise a structural decision. Keep it 
 
 <!-- Add decisions below, newest first. -->
 
+### 2026-06-28 — `module-invoicing` entities: first domain module on the shared Base (B8)
+**Decision:** `Party`, `Invoice`, `InvoiceLine` inherit the nucleus declarative `Base` (one
+metadata, shared transactions); `issue_invoice` allocates the gapless number from
+`Sequence("invoice")` on the *caller's* session; the module ships a `ModuleManifest` whose
+`migrate` creates its tables with `create_all` on the loader's session connection. A line
+stores an opaque `tax_code`; one currency lives on the invoice and every line's Money derives
+from it. **Why number-on-caller's-session:** allocation must be in the same transaction as
+the insert, so a rolled-back request reuses the number instead of skipping it — gaplessness
+holds per request, not just under concurrency (B2). **Why `create_all`, not Alembic yet:**
+honest for a schema with no history; per-module Alembic is the production path once tables
+evolve (README §2) — deferred to avoid migration scaffolding before there's anything to
+migrate. **Why currency on the invoice, not the line:** mixing currencies on one invoice
+becomes impossible by construction rather than by validation. **Cost / watch:** (1)
+`create_all` can't express schema *changes* — the first real migration forces the Alembic
+switch, and that cutover must import the existing tables as the baseline; (2) tax is
+deliberately absent — totals here are pre-tax `subtotal()` only; the grand total waits on the
+registry-resolved calculator (B9).
+
 ### 2026-06-28 — `nucleus.api`: FastAPI in the core, auth split pure/bound (B7)
 **Decision:** the API gateway lives in the nucleus, so `fastapi` is now a nucleus dependency.
 Auth is two layers: `JWTAuth` (pure pyjwt — issue/verify, enforces signature, expiry, and a

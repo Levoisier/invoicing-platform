@@ -1,6 +1,7 @@
-"""Shared fixtures for nucleus tests.
+"""Workspace-wide pytest fixtures, loaded from the repo root so every package's
+tests share them (nucleus, module-invoicing, …).
 
-The DB-backed properties (gapless numbering today, atomicity later) can only be
+The DB-backed properties (gapless numbering, atomicity, persistence) can only be
 proven against real Postgres — the row-lock semantics that make them true don't
 exist in SQLite. So these fixtures point at a live Postgres and *skip* cleanly
 when one isn't reachable, rather than silently testing weaker semantics.

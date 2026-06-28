@@ -101,10 +101,16 @@ API gateway helpers + JWT auth.
   expiry/forged/garbage rejection, and the protected route accepting a valid token while
   rejecting missing/invalid ones.
 
-## B8 — `module-invoicing` (entities)  `[ ]`
+## B8 — `module-invoicing` (entities)  `[x]`
 `Party`, `Invoice`, `InvoiceLine`; invoice numbering via `Sequence` (B2).
 - `Party` carries jurisdiction + tax id (NIT/Cédula).
 - **Done when:** an invoice with lines persists and receives a gapless number.
+- Done: `Party`/`Invoice`/`InvoiceLine` on the nucleus `Base`; `issue_invoice` service
+  draws the number from `Sequence("invoice")` on the caller's session, and a `ModuleManifest`
+  whose `migrate` creates the tables (transactionally, via the loader). Lines carry an opaque
+  `tax_code` — IVA meaning is the CO plugin's job (B9). Tests prove persistence + line
+  round-trip, gapless numbers across invoices, that a rolled-back invoice doesn't burn a
+  number, and that the module installs cleanly via the loader.
 
 ## B9 — `plugin-tax-co`  `[ ]`  · Proves: *Plugin inversion*
 `ColombiaTaxCalculator` for `jurisdiction = "CO"`; **entry-point** registration
