@@ -38,6 +38,22 @@ or file when useful.
 
 <!-- Add new lessons below this line, newest first. -->
 
+## 2026-06-28 — FastAPI's `Depends` trips ruff B008; PyJWT warns on short secrets (B7)
+**Context:** Wiring JWT auth into a FastAPI dependency and linting/testing it.
+**Surprise:** Two small ones. (1) ruff's bugbear `B008` ("don't call functions in argument
+defaults") fires on the FastAPI idiom `def route(x = Depends(...))` — but that *is* the
+framework contract, not a bug. The fix is config, not `# noqa`: add `fastapi.Depends`
+(and `Security`) to `[lint.flake8-bugbear] extend-immutable-calls`. A *nested* call like
+`Depends(require_principal(auth))` still trips it, so build the dependency once at module
+level (`dep = require_principal(auth)`) — which is also how a host should wire it. (2) PyJWT
+2.13 emits `InsecureKeyLengthWarning` for HMAC secrets under 32 bytes; tests with a short
+secret spew warnings. Use a ≥32-byte secret (and we bumped `.env.example` accordingly).
+**Resolution:** Whitelisted `Depends`/`Security` in ruff, built the auth dependency once,
+used 32-byte test secrets.
+**Takeaway:** When a linter fights a framework's required idiom, prefer a scoped config
+allowance over per-line suppressions — it documents the exception once and keeps the diff
+clean.
+
 ## 2026-06-27 — Atomic boot depends on Postgres transactional DDL (B5)
 **Context:** The module loader runs every module's `migrate` inside one unit of work so a
 failed boot rolls back with no half-installed schema, and a test asserts the

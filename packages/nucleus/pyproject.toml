@@ -3,15 +3,18 @@ name = "nucleus"
 version = "0.1.0"
 description = "Reusable transactional core: primitives, DB/UoW, contracts, registry, module loader, event bus, API/auth."
 requires-python = ">=3.11"
-# The core's runtime deps. Deliberately framework-light: it owns transactions
-# (SQLAlchemy), validation/precision (Pydantic), the Postgres driver, and JWT for
-# the API gateway. It must NEVER depend on a module or a plugin — that inversion
-# is the whole project (CLAUDE.md §2).
+# The core's runtime deps. It owns transactions (SQLAlchemy), validation/precision
+# (Pydantic), the Postgres driver, JWT, and the API gateway itself (FastAPI) —
+# README §1 puts the gateway *in* the nucleus. "Framework-light" here means it
+# never depends on a module or a plugin; that inversion is the whole project
+# (CLAUDE.md §2). FastAPI is the gateway framework the core provides, not a domain
+# dependency.
 dependencies = [
     "sqlalchemy>=2.0",
     "pydantic>=2",
     "psycopg[binary]>=3.1",
     "pyjwt>=2.8",
+    "fastapi>=0.115",
 ]
 
 [build-system]

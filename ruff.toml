@@ -13,3 +13,8 @@ select = ["E", "W", "F", "I", "UP", "B"]
 # Our first-party packages, so imports group correctly and a stray
 # `import tax_co` in the core would stand out in review.
 known-first-party = ["nucleus", "invoicing", "payments", "tax_co", "app"]
+
+[lint.flake8-bugbear]
+# FastAPI's dependency injection *requires* calling Depends()/Security() in
+# argument defaults — that's the framework contract, not the bug B008 warns about.
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Security"]

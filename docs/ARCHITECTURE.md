@@ -142,6 +142,24 @@ Append a dated entry whenever you make or revise a structural decision. Keep it 
 
 <!-- Add decisions below, newest first. -->
 
+### 2026-06-28 — `nucleus.api`: FastAPI in the core, auth split pure/bound (B7)
+**Decision:** the API gateway lives in the nucleus, so `fastapi` is now a nucleus dependency.
+Auth is two layers: `JWTAuth` (pure pyjwt — issue/verify, enforces signature, expiry, and a
+non-empty subject) and `gateway.require_principal(auth)` (the FastAPI dependency that reads
+the bearer token and answers 401). **Why FastAPI in the core:** README §1 says the nucleus
+*owns the API gateway*; "framework-light" (CLAUDE.md §2) means no dependency on a *module or
+plugin*, not "no web framework". Putting the gateway here is what lets modules expose
+protected routes uniformly without each re-implementing auth. **Why split pure vs bound:**
+token rules are security-critical and must be testable without HTTP; the thin FastAPI adapter
+then has almost no logic to get wrong. **Why config is passed in:** same rule as nucleus.db —
+the host owns secrets, the core stays a library, so `JWTAuth` is constructed with the secret
+rather than reading `os.environ`. **Cost / sharp edges:** (1) the core now pulls FastAPI, a
+heavier dep — acceptable since every edition ships an HTTP API; (2) HS256 (shared secret)
+only — fine for single-tenant self-host; asymmetric keys (RS256) would be a later change if
+multiple services must verify tokens; (3) `require_principal` is a factory (needs the host's
+`auth`), so the host builds the dependency once and reuses it (router mounting itself lands
+in B10).
+
 ### 2026-06-27 — `nucleus.events.bus`: synchronous, in-transaction delivery (B6)
 **Decision:** the event bus delivers synchronously, in-process, on the publisher's session
 (`publish(event, session)`); exact-type dispatch, handlers in subscription order, exceptions

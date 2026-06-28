@@ -91,9 +91,15 @@ In-process event bus (publish/subscribe within the shared transaction).
   `docs/ARCHITECTURE.md` §3 + decision log. Tests prove delivery/ordering/exact-type
   dispatch and the commit-together / roll-back-together property against Postgres.
 
-## B7 — `nucleus.api`  `[ ]`
+## B7 — `nucleus.api`  `[x]`
 API gateway helpers + JWT auth.
 - **Done when:** a protected route rejects a missing/invalid token and accepts a valid one.
+- Done: split into a framework-agnostic `JWTAuth` (issue/verify HS256, enforces exp +
+  subject) and a FastAPI binding `require_principal(auth)` that turns a bearer token into a
+  `Principal` or a clean 401. Config is passed in, never read from env. `fastapi` added to
+  nucleus deps (README §1 puts the gateway in the core). Tests prove token round-trip,
+  expiry/forged/garbage rejection, and the protected route accepting a valid token while
+  rejecting missing/invalid ones.
 
 ## B8 — `module-invoicing` (entities)  `[ ]`
 `Party`, `Invoice`, `InvoiceLine`; invoice numbering via `Sequence` (B2).
