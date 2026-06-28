@@ -15,14 +15,17 @@ from pydantic import BaseModel
 
 from app.settings import Settings, settings
 
-# The edition's module set. Importing the manifest is the host's choice of modules;
+# The edition's module set. Importing the manifests is the host's choice of modules;
 # plugins arrive separately, via entry-point discovery, so they need no mention here.
+# Order in this list doesn't matter — the loader toposorts by declared dependencies
+# (payments depends on invoicing), so invoicing always migrates first.
 from invoicing import manifest as invoicing_manifest
 from nucleus.api import JWTAuth, get_principal, get_session, require_principal
 from nucleus.db import make_engine, make_session_factory, session_per_request, unit_of_work
 from nucleus.modules import load_modules
 from nucleus.plugins import discover_plugins
 from nucleus.registry import route, tax
+from payments import manifest as payments_manifest
 
 
 class TokenIn(BaseModel):
@@ -54,7 +57,7 @@ def create_app(config: Settings = settings) -> FastAPI:
     # One unit of work for the whole boot: every module's migration commits together
     # or not at all (B5). Modules' register hooks publish their routers into `route`.
     with unit_of_work(session_factory) as session:
-        load_modules([invoicing_manifest], session)
+        load_modules([invoicing_manifest, payments_manifest], session)
 
     app = FastAPI(title="Invoicing Platform API")
 

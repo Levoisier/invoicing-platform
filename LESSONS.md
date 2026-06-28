@@ -38,6 +38,25 @@ or file when useful.
 
 <!-- Add new lessons below this line, newest first. -->
 
+## 2026-06-28 — Event-bus decoupling can't beat the dependency direction (B12)
+**Context:** The payments stub said it should "cooperate with invoicing through the event
+bus, not a hard import." Tried to honor that for recording a payment (which must move invoice
+status).
+**Surprise:** It doesn't work cleanly. The thing that reacts to a payment is *invoicing* (it
+owns status), so an event-driven design makes invoicing the subscriber — which means
+invoicing must import the event type. If payments owns the event (the natural concept),
+invoicing→payments is a *wrong-direction* dependency (invoicing is the earlier/lower module
+and must not depend on the later one). Putting the event in invoicing fixes the direction but
+is conceptually backwards. The event bus only decouples cleanly when the *publisher* is the
+lower module and the *subscriber* is higher — here it's the reverse.
+**Resolution:** Used a plain downward import (payments → invoicing), which the build spine
+already sanctions, and kept the whole action in one transaction. The bus stays the right tool
+for lower-publishes/higher-subscribes flows; it's not a universal decoupler.
+**Takeaway:** "Use events to decouple" has a precondition: the dependency must run the same
+way as the event flow. When the reactor is the lower-level module, an import is honest and an
+event is a contortion. Don't add a bus hop to dodge a dependency the architecture already
+permits.
+
 ## 2026-06-28 — Mounting module routes the host hasn't configured: dependency_overrides (B10)
 **Context:** Modules define FastAPI routes, but the engine and auth secret live in the host.
 The route can't import the host's session factory without inverting the dependency.

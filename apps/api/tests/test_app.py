@@ -18,6 +18,8 @@ from sqlalchemy.engine import Engine
 # Tables the boot (modules + numbering + loader ledger) creates; dropped for a clean
 # bootstrap each test.
 _TABLES = (
+    "payments_ledger_entry",
+    "payments_payment",
     "invoicing_invoice_line",
     "invoicing_invoice",
     "invoicing_party",
@@ -96,3 +98,36 @@ def test_create_client_then_invoice_over_http(client: TestClient) -> None:
     fetched = client.get(f"/invoices/{body['id']}", headers=auth)
     assert fetched.status_code == 200
     assert fetched.json()["total"] == {"amount": "1240000", "currency": "COP"}
+
+
+def test_record_payment_marks_invoice_paid_over_http(client: TestClient) -> None:
+    auth = {"Authorization": f"Bearer {_token(client)}"}
+    client_id = client.post(
+        "/clients",
+        json={"name": "Acme", "tax_id": "900.1", "jurisdiction": "CO"},
+        headers=auth,
+    ).json()["id"]
+    invoice = client.post(
+        "/invoices",
+        json={
+            "client_id": client_id,
+            "currency": "COP",
+            "lines": [{"description": "Item", "quantity": "1", "unit_price": "1000000",
+                       "tax_code": "iva_19"}],
+        },
+        headers=auth,
+    ).json()
+    assert invoice["total"] == {"amount": "1190000", "currency": "COP"}
+
+    # Pay it in full: the payments module posts the ledger and flips status, atomically.
+    paid = client.post(
+        f"/invoices/{invoice['id']}/payments",
+        json={"amount": "1190000", "currency": "COP"},
+        headers=auth,
+    )
+    assert paid.status_code == 201
+    assert paid.json()["invoice_status"] == "paid"
+    assert len(paid.json()["ledger"]) == 2
+
+    fetched = client.get(f"/invoices/{invoice['id']}", headers=auth)
+    assert fetched.json()["status"] == "paid"

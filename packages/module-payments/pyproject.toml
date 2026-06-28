@@ -3,9 +3,12 @@ name = "payments"
 version = "0.1.0"
 description = "Payments domain module: Payment, LedgerEntry, atomic invoice-status transitions."
 requires-python = ">=3.11"
-# Depends on nucleus (and at runtime cooperates with invoicing through the shared
-# transaction and event bus, not a hard import).
-dependencies = ["nucleus"]
+# Depends on nucleus and invoicing. The downward dependency is deliberate: recording
+# a payment is one atomic action spanning both domains (post the ledger AND move the
+# invoice's status), and a same-process import is what keeps it in one transaction.
+# payments is the later module in the build spine, so depending on invoicing respects
+# the dependency direction; invoicing never imports payments.
+dependencies = ["nucleus", "invoicing"]
 
 [build-system]
 requires = ["hatchling"]

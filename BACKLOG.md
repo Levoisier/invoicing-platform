@@ -145,12 +145,19 @@ client NIT, COP with 0 decimals.
   Docker, fall back (headless-Chromium / ReportLab) and **record why** in
   `docs/ARCHITECTURE.md` and `LESSONS.md`.
 
-## B12 — `module-payments`  `[ ]`  · Proves: *Atomicity*
+## B12 — `module-payments`  `[x]`  · Proves: *Atomicity*
 `Payment` + `LedgerEntry`; invoice status transitions (`draft → issued → partial → paid`)
 posted **atomically** with ledger entries in the **same transaction**.
 - **Done when:** a test shows status + ledger commit together and **roll back together** on
   failure. Include the "break it out-of-process" demonstration showing why same-process is
   what makes atomicity possible.
+- Done: `Payment` + signed-amount double-entry `LedgerEntry` (debit cash / credit AR, sums
+  to zero); `record_payment` posts the ledger and moves invoice status on the caller's
+  session — one unit. payments depends on invoicing (downward, in-spine) and loads after it
+  via toposort; mounted in the host (`POST /invoices/{id}/payments`). Tests: full/partial
+  transitions, ledger balances, commit-together, roll-back-together, and the out-of-process
+  demonstration showing two transactions tear the books apart. HTTP e2e records a payment
+  and sees the invoice flip to `paid`.
 
 ## B13 — Contract generation  `[ ]`  · Proves: *Contract honesty*
 OpenAPI (from FastAPI) → `openapi-typescript` → `apps/web/lib/types.ts`, wired into the
@@ -173,7 +180,7 @@ consuming the **generated** types from B13.
 
 ## Acceptance checklist (from README §7.B — the project isn't v1.0.0 until all hold)
 
-- [ ] **Atomicity** proven by test (B12).
+- [x] **Atomicity** proven by test (B12).
 - [x] **Gapless numbering** proven by concurrency test (B2).
 - [x] **Plugin inversion** proven: CO resolved from registry, no direct import, removable
       cleanly (B4, B9).

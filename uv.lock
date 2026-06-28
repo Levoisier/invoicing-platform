@@ -432,11 +432,15 @@ name = "payments"
 version = "0.1.0"
 source = { editable = "packages/module-payments" }
 dependencies = [
+    { name = "invoicing" },
     { name = "nucleus" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "nucleus", editable = "packages/nucleus" }]
+requires-dist = [
+    { name = "invoicing", editable = "packages/module-invoicing" },
+    { name = "nucleus", editable = "packages/nucleus" },
+]
 
 [[package]]
 name = "pluggy"

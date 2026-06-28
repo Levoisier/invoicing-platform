@@ -142,6 +142,27 @@ Append a dated entry whenever you make or revise a structural decision. Keep it 
 
 <!-- Add decisions below, newest first. -->
 
+### 2026-06-28 — `module-payments`: atomicity proven, via a downward import not the bus (B12)
+**Decision:** `record_payment` writes the payment, its balanced double-entry ledger, and the
+invoice's new status all on the *caller's session*, so they commit or roll back as one unit.
+payments **imports invoicing** (`Invoice`, `InvoiceStatus`, `compute_totals`) — a downward
+dependency, declared in the manifest so the loader migrates invoicing first. **Why an import,
+not the event bus:** the stub aspired to "cooperate via the event bus, not a hard import",
+but an event-driven version forces a *wrong-direction* dependency — the subscriber is
+invoicing (it owns status), so invoicing would have to import a payments event, yet invoicing
+is the earlier, lower module. Putting the event in invoicing instead is conceptually
+backwards (a "payment recorded" event owned by invoicing). The build spine explicitly places
+payments after invoicing, so a same-process downward import is the honest model and keeps the
+atomic action obviously in one transaction. CLAUDE.md §2 forbids core→plugin imports, not
+module→module ones. **Why signed-amount ledger:** storing +debit/−credit makes the
+double-entry invariant a one-line "sums to zero" check. **The demonstration:** a test posts
+the ledger in a separate committed transaction and then fails the status update in another —
+the ledger persists while the invoice stays ISSUED, the exact corruption same-transaction
+prevents. That is the concrete argument for why modules are in-process sharing one session
+(README §1, the second core idea). **Cost:** payments↔invoicing are now compile-time coupled
+(can't deploy independently) — accepted, because that coupling is *what buys* atomicity;
+splitting them would require distributed transactions, which the project rejects on purpose.
+
 ### 2026-06-28 — `apps/api` bootstrap: compose the edition at runtime (B10)
 **Decision:** `create_app()` is the composition root: clear the shared registries, discover
 tax plugins from entry points, load modules (toposort + migrate) in one unit of work, then
