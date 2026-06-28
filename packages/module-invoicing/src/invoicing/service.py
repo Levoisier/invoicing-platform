@@ -14,10 +14,14 @@ from decimal import Decimal
 from typing import TYPE_CHECKING
 
 from invoicing.models import Invoice, InvoiceLine, InvoiceStatus, Party
-from nucleus.primitives import Sequence
+from nucleus.primitives import Money, Sequence
+from nucleus.registry import tax as _tax_registry
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session
+
+    from nucleus.contracts import TaxCalculator
+    from nucleus.registry import Registry
 
 # One shared counter for invoice numbers. Stateless (the state is the DB row), so a
 # module-level instance is fine and every worker addresses the same "invoice" row.
@@ -61,3 +65,33 @@ def issue_invoice(
     # here, inside the caller's transaction, rather than at a surprising later point.
     session.flush()
     return invoice
+
+
+@dataclass(frozen=True)
+class InvoiceTotals:
+    """An invoice's money, broken out so a PDF/UI can show the IVA line (B11)."""
+
+    subtotal: Money  # net of tax
+    tax: Money  # total IVA
+    total: Money  # subtotal + tax
+
+
+def compute_totals(
+    invoice: Invoice, *, tax_registry: Registry[str, TaxCalculator] = _tax_registry
+) -> InvoiceTotals:
+    """Total an invoice, applying tax via the calculator registered for the
+    client's jurisdiction.
+
+    This is the inversion in action: invoicing resolves the calculator from the
+    registry by ``party.jurisdiction`` and never imports a plugin. If no plugin is
+    registered for that jurisdiction, ``registry.get`` raises a clear "no
+    TaxCalculator registered" error — which is exactly how removing a jurisdiction
+    fails: cleanly, with no core change."""
+    calculator = tax_registry.get(invoice.party.jurisdiction)
+    subtotal = Money(0, invoice.currency)
+    tax = Money(0, invoice.currency)
+    for line in invoice.lines:
+        net = line.net()
+        subtotal = subtotal + net
+        tax = tax + calculator.tax_for(net, line.tax_code)
+    return InvoiceTotals(subtotal=subtotal, tax=tax, total=subtotal + tax)

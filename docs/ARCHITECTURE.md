@@ -142,6 +142,25 @@ Append a dated entry whenever you make or revise a structural decision. Keep it 
 
 <!-- Add decisions below, newest first. -->
 
+### 2026-06-28 — `plugin-tax-co` + discovery: the inversion, proven end to end (B9)
+**Decision:** `ColombiaTaxCalculator` lives in its own package and self-registers via the
+`nucleus.plugins` entry point; `nucleus.plugins.discover_plugins()` loads that group,
+instantiates each class, and routes it into a registry **by the contract it structurally
+satisfies** (isinstance against the runtime_checkable `TaxCalculator`). `invoicing.compute_totals`
+resolves the calculator from the tax registry by `party.jurisdiction` and never imports the
+plugin. **Why route by contract, not entry-point name:** a plugin is whatever contract it
+matches, so adding a `PaymentProvider` plugin later needs no change to discovery's interface.
+**Why the consumer holds the "remove" test:** the guarantee that matters is the *consumer's*
+failure mode — an absent plugin yields the registry's clear "no TaxCalculator registered for
+jurisdiction 'CO'", with zero core change to add or drop a jurisdiction. **Rates:** verified
+against DIAN (June 2026) — general 19%, reduced 5%, excluded/exempt 0% (Estatuto Tributario
+arts. 420–513). **Cost / sharp edges:** (1) codes are rate *buckets*, not product
+classifications — choosing 5% vs 19% per line is the user's responsibility; (2) v1 folds
+"excluded" and "exempt" into one 0% code (they differ on input-tax credit, out of scope);
+(3) discovery instantiates every advertised plugin at boot — fine at this scale, but a
+misbehaving third-party plugin's constructor could break startup (a sandboxing concern for a
+real marketplace, not v1).
+
 ### 2026-06-28 — `module-invoicing` entities: first domain module on the shared Base (B8)
 **Decision:** `Party`, `Invoice`, `InvoiceLine` inherit the nucleus declarative `Base` (one
 metadata, shared transactions); `issue_invoice` allocates the gapless number from

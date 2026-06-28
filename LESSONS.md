@@ -38,6 +38,22 @@ or file when useful.
 
 <!-- Add new lessons below this line, newest first. -->
 
+## 2026-06-28 — CO IVA rates verified; "excluded" ≠ "exempt" but we fold them (B9)
+**Context:** Building the CO tax plugin; CLAUDE.md §3 requires verifying rates against current
+DIAN rules, not memory.
+**Surprise/confirmation:** Rates hold as the README assumed — general **19%**, reduced
+**5%**, and 0% — but the 0% bucket hides a real distinction Colombian tax law makes:
+*excluido* (excluded, art. 424) vs *exento* (exempt, art. 477). Both charge 0% output IVA,
+but **exempt** sellers can still credit *input* IVA while **excluded** ones cannot. v1 models
+only output tax, so it collapses both into one `excluded` (0%) code. Also: the tax codes are
+rate *buckets*, not product classifications — the app does not decide whether a given good is
+5% or 19%; the user picks the code per line.
+**Resolution:** Implemented 19/5/0; documented the excluded/exempt simplification in code and
+ARCHITECTURE; recorded the source (Estatuto Tributario arts. 420–513, DIAN, June 2026).
+**Takeaway:** When a tax rate looks trivially right, the trap is usually in the *0% cases* —
+"zero-rated" splits into legally distinct kinds. Fine to simplify for v1, but say so out loud
+so the next person knows it's a deliberate scope cut, not an oversight.
+
 ## 2026-06-28 — FastAPI's `Depends` trips ruff B008; PyJWT warns on short secrets (B7)
 **Context:** Wiring JWT auth into a FastAPI dependency and linting/testing it.
 **Surprise:** Two small ones. (1) ruff's bugbear `B008` ("don't call functions in argument

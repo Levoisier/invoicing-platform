@@ -6,14 +6,16 @@ the registry-resolved TaxCalculator — never by importing a jurisdiction plugin
 
 from invoicing.manifest import manifest
 from invoicing.models import Invoice, InvoiceLine, InvoiceStatus, Party
-from invoicing.service import LineInput, issue_invoice
+from invoicing.service import InvoiceTotals, LineInput, compute_totals, issue_invoice
 
 __all__ = [
     "Invoice",
     "InvoiceLine",
     "InvoiceStatus",
+    "InvoiceTotals",
     "LineInput",
     "Party",
+    "compute_totals",
     "issue_invoice",
     "manifest",
 ]
