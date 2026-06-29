@@ -144,6 +144,24 @@ Append a dated entry whenever you make or revise a structural decision. Keep it 
 
 <!-- Add decisions below, newest first. -->
 
+### 2026-06-29 — Contract generation: schema built DB-free, one Make target (B13)
+**Decision:** `make gen-types` runs `app.export_openapi` (which dumps `create_app(run_migrations=False).openapi()`)
+and pipes the JSON through `openapi-typescript` into `apps/web/lib/types.ts`. To build the
+schema without a database, the loader gained `register_modules` — a register-only path that
+mounts routers (no DB) — and `ModuleContext.session` became optional (None on that path; only
+`register` hooks run, and they don't touch it). **Why DB-free:** contract generation must run
+in CI and on any dev machine without Postgres; the schema is a pure function of routes +
+Pydantic models, so requiring a DB would be incidental coupling. This also cleanly separates
+"wire the app's HTTP surface" from "migrate the database" — two things B10 had fused.
+**Why one Make target owns the file:** `types.ts` is generated, never hand-edited (CLAUDE.md
+§2); making regeneration a single command means a backend contract change can't silently
+drift from the frontend's view of it — the diff shows up the moment you run it. **Cost /
+watch:** (1) the toolchain hop is real — gen-types needs Node deps installed (`npm install` in
+apps/web), so it's a two-toolchain command; (2) nothing yet *enforces* that a committed
+`types.ts` is in sync (a CI "regenerate and `git diff --exit-code`" check is the honest guard,
+a later addition); (3) `register_modules` runs register hooks with `session=None`, so any
+future register hook that needs the DB must use the migrate phase instead.
+
 ### 2026-06-28 — PDF via WeasyPrint (HTML/CSS), no fallback needed (B11)
 **Decision:** invoices render as HTML/CSS (a Jinja2 template) → PDF via WeasyPrint, in
 `invoicing.pdf`; `GET /invoices/{id}/pdf` serves it. The IVA breakdown comes from a new

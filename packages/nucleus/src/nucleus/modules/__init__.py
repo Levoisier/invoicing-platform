@@ -4,7 +4,7 @@ rejects dependency cycles (BACKLOG B5).
 """
 
 from nucleus.modules.lifecycle import Action, ensure_schema, installed_modules
-from nucleus.modules.loader import LoadResult, load_modules
+from nucleus.modules.loader import LoadResult, load_modules, register_modules
 from nucleus.modules.manifest import ModuleContext, ModuleManifest
 from nucleus.modules.toposort import (
     DependencyCycleError,
@@ -24,5 +24,6 @@ __all__ = [
     "ensure_schema",
     "installed_modules",
     "load_modules",
+    "register_modules",
     "toposort",
 ]

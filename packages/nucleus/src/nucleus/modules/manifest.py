@@ -23,9 +23,13 @@ if TYPE_CHECKING:
 class ModuleContext:
     """Handed to a module's hooks. Carries the loader's session so a module's
     migration participates in the *same* transaction as the rest of the boot —
-    bootstrap is then all-or-nothing, like everything else on this platform."""
+    bootstrap is then all-or-nothing, like everything else on this platform.
 
-    session: Session
+    ``session`` is None only in the register-only path (mounting routers without a
+    DB, e.g. OpenAPI export) — where `register` hooks don't touch it. `migrate`
+    hooks always run with a real session."""
+
+    session: Session | None = None
 
 
 # Hooks are plain callables, not subclasses: a module supplies behaviour, it does

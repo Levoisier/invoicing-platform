@@ -16,5 +16,8 @@ node_modules/
 apps/web/.next/
 apps/web/out/
 
+# Intermediate OpenAPI dump from `make gen-types` (types.ts is the committed output)
+openapi.json
+
 # OS / editor
 .DS_Store

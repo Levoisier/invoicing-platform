@@ -48,3 +48,13 @@ def load_modules(manifests: list[ModuleManifest], session: Session) -> list[Load
             manifest.register(ModuleContext(session=session))
         results.append(LoadResult(manifest.name, manifest.version, action))
     return results
+
+
+def register_modules(manifests: list[ModuleManifest]) -> None:
+    """Run only the `register` hooks (mount routers etc.), in dependency order,
+    touching no database. For assembling the app's HTTP surface without migrating —
+    e.g. emitting the OpenAPI schema in CI, where no Postgres is available."""
+    context = ModuleContext(session=None)
+    for manifest in toposort(manifests):
+        if manifest.register is not None:
+            manifest.register(context)

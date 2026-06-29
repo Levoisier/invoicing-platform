@@ -22,7 +22,7 @@ from app.settings import Settings, settings
 from invoicing import manifest as invoicing_manifest
 from nucleus.api import JWTAuth, get_principal, get_session, require_principal
 from nucleus.db import make_engine, make_session_factory, session_per_request, unit_of_work
-from nucleus.modules import load_modules
+from nucleus.modules import load_modules, register_modules
 from nucleus.plugins import discover_plugins
 from nucleus.registry import route, tax
 from payments import manifest as payments_manifest
@@ -38,7 +38,7 @@ class TokenOut(BaseModel):
     token_type: str = "bearer"
 
 
-def create_app(config: Settings = settings) -> FastAPI:
+def create_app(config: Settings = settings, *, run_migrations: bool = True) -> FastAPI:
     engine = make_engine(config.database_url)
     session_factory = make_session_factory(engine)
     auth = JWTAuth(
@@ -47,6 +47,8 @@ def create_app(config: Settings = settings) -> FastAPI:
         expire_minutes=config.jwt_expire_minutes,
     )
 
+    modules = [invoicing_manifest, payments_manifest]
+
     # Build the composition from scratch. Clearing the shared registries makes
     # bootstrap idempotent — a second app in the same process (tests) re-composes
     # cleanly instead of tripping duplicate-registration guards.
@@ -54,10 +56,15 @@ def create_app(config: Settings = settings) -> FastAPI:
     route.clear()
 
     discover_plugins()  # populate the tax registry from installed entry points
-    # One unit of work for the whole boot: every module's migration commits together
-    # or not at all (B5). Modules' register hooks publish their routers into `route`.
-    with unit_of_work(session_factory) as session:
-        load_modules([invoicing_manifest, payments_manifest], session)
+    if run_migrations:
+        # One unit of work for the whole boot: every module's migration commits
+        # together or not at all (B5). Register hooks also publish routers here.
+        with unit_of_work(session_factory) as session:
+            load_modules(modules, session)
+    else:
+        # Schema-only build (e.g. OpenAPI export for gen-types): mount routers
+        # without touching the DB, so the contract can be generated with no Postgres.
+        register_modules(modules)
 
     app = FastAPI(title="Invoicing Platform API")
 

@@ -29,10 +29,14 @@ migrate:
 	uv run python -c "from app.bootstrap import create_app; create_app()" && echo "migrate: modules migrated via bootstrap"
 
 # Emit OpenAPI from FastAPI and regenerate the frontend's typed client. The one
-# Make target that owns apps/web/lib/types.ts (README §7.B: contract honesty).
-# Implemented in B13; placeholder until then.
+# Make target that owns apps/web/lib/types.ts (README §7.B: contract honesty) —
+# never hand-edit that file. Needs no DB: the schema is built with migrations off.
+# Assumes web deps are installed (`cd apps/web && npm install`).
 gen-types:
-	@echo "gen-types: implemented in B13"
+	uv run python -m app.export_openapi > openapi.json
+	cd apps/web && npx openapi-typescript ../../openapi.json -o lib/types.ts
+	rm -f openapi.json
+	@echo "gen-types: regenerated apps/web/lib/types.ts"
 
 # Run the Python test suite. Empty today, but the target must exist and exit 0
 # (BACKLOG B0 done-criterion: `make test` runs even if empty).
