@@ -1,92 +1,229 @@
-/* Minimal, deliberately plain styling. README §7: polish the core, not the buttons. */
+/* Scarlet / gold / black identity. Dark-only by design (no light mode), and
+   mobile-first: the base rules target a phone, and a single min-width breakpoint
+   adds breathing room on larger screens. README §7: polish the core — but the
+   product still needs to look like a product. */
+
+:root {
+  --bg: #0b0b0d;
+  --surface: #16161a;
+  --surface-2: #20202a;
+  --border: #2c2c36;
+  --text: #f3efe7;
+  --muted: #a39e97;
+  --scarlet: #e11428;
+  --scarlet-hi: #ff2738;
+  --gold: #e8b339;
+  --gold-soft: #f3d488;
+  color-scheme: dark;
+}
+
 * {
   box-sizing: border-box;
 }
+
+html,
 body {
   margin: 0;
-  font-family: system-ui, sans-serif;
-  color: #1a1a1a;
-  background: #f7f7f8;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  -webkit-text-size-adjust: 100%;
 }
+
+a {
+  color: var(--gold);
+  text-decoration: none;
+}
+a:hover {
+  color: var(--gold-soft);
+}
+
+h1 {
+  font-size: 1.5rem;
+  margin: 0 0 16px;
+  /* gold hairline under the page title ties headings to the brand */
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--gold);
+  display: inline-block;
+}
+h3 {
+  margin: 0 0 12px;
+  color: var(--gold);
+  font-size: 1rem;
+  letter-spacing: 0.02em;
+}
+
+/* --- nav: sticky brand bar ------------------------------------------------ */
 .nav {
+  position: sticky;
+  top: 0;
+  z-index: 10;
   display: flex;
-  gap: 16px;
+  flex-wrap: wrap;
   align-items: center;
-  padding: 12px 24px;
-  background: #1f2937;
-  color: #fff;
+  gap: 8px 18px;
+  padding: 12px 16px;
+  background: #000;
+  border-bottom: 2px solid var(--scarlet);
+}
+.nav .brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.nav .brand .mark {
+  color: var(--gold);
 }
 .nav a {
-  color: #fff;
-  text-decoration: none;
+  color: var(--text);
+  font-size: 0.95rem;
+}
+.nav a:hover {
+  color: var(--gold);
 }
 .nav .spacer {
   flex: 1;
 }
+
+/* --- layout --------------------------------------------------------------- */
 .container {
   max-width: 880px;
-  margin: 24px auto;
-  padding: 0 24px;
+  margin: 0 auto;
+  padding: 16px;
 }
+
 .card {
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
   padding: 16px;
   margin-bottom: 16px;
+  overflow-x: auto; /* wide tables scroll instead of breaking the layout on phones */
 }
+
+/* --- tables --------------------------------------------------------------- */
 table {
   width: 100%;
   border-collapse: collapse;
+  font-size: 0.92rem;
 }
 th,
 td {
   text-align: left;
-  padding: 8px;
-  border-bottom: 1px solid #eee;
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+thead th {
+  color: var(--gold);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 td.num,
 th.num {
   text-align: right;
 }
-input,
-select,
-button {
-  font: inherit;
-  padding: 6px 8px;
-  margin: 2px 0;
+tbody tr:last-child td {
+  border-bottom: none;
 }
-button {
-  cursor: pointer;
-  background: #2563eb;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  padding: 8px 14px;
-}
-button.secondary {
-  background: #e5e7eb;
-  color: #111;
-}
+
+/* --- forms ---------------------------------------------------------------- */
 label {
   display: block;
-  font-size: 13px;
-  color: #555;
-  margin-top: 8px;
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-top: 12px;
+  margin-bottom: 4px;
 }
-.error {
-  color: #b91c1c;
-  margin: 8px 0;
+input,
+select {
+  width: 100%;
+  font: inherit;
+  padding: 11px 12px;
+  background: var(--surface-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
 }
+input:focus,
+select:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(232, 179, 57, 0.18);
+}
+
+/* --- buttons -------------------------------------------------------------- */
+button {
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 44px; /* comfortable tap target */
+  padding: 10px 18px;
+  border: none;
+  border-radius: 8px;
+  background: var(--scarlet);
+  color: #fff;
+}
+button:hover {
+  background: var(--scarlet-hi);
+}
+button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+button.secondary {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+button.secondary:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+/* --- status badges (kept within the palette) ----------------------------- */
 .badge {
-  padding: 2px 8px;
-  border-radius: 10px;
-  font-size: 12px;
-  background: #e5e7eb;
-}
-.badge.paid {
-  background: #bbf7d0;
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border: 1px solid var(--border);
+  color: var(--muted);
 }
 .badge.partial {
-  background: #fde68a;
+  border-color: var(--scarlet);
+  color: var(--scarlet-hi);
+}
+.badge.paid {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: #000;
+}
+
+.error {
+  color: var(--scarlet-hi);
+  margin: 10px 0;
+  font-size: 0.9rem;
+}
+
+/* --- larger screens ------------------------------------------------------- */
+@media (min-width: 640px) {
+  .nav {
+    padding: 14px 28px;
+  }
+  .container {
+    padding: 28px 24px;
+  }
+  h1 {
+    font-size: 1.9rem;
+  }
+  .card {
+    padding: 22px;
+  }
 }

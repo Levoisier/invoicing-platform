@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { session } from "@/lib/api";
+import { Logo } from "./logo";
 
 export function Nav() {
   const router = useRouter();
@@ -13,7 +14,12 @@ export function Nav() {
   }
   return (
     <nav className="nav">
-      <strong>Invoicing</strong>
+      <Link href="/" className="brand">
+        <span className="mark">
+          <Logo size={28} />
+        </span>
+        Invoicing
+      </Link>
       <Link href="/clients">Clients</Link>
       <Link href="/invoices">Invoices</Link>
       <span className="spacer" />
