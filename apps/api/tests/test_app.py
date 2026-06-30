@@ -100,6 +100,28 @@ def test_create_client_then_invoice_over_http(client: TestClient) -> None:
     assert fetched.json()["total"] == {"amount": "1240000", "currency": "COP"}
 
 
+def test_list_endpoints_back_the_web_screens(client: TestClient) -> None:
+    auth = {"Authorization": f"Bearer {_token(client)}"}
+    client.post("/clients", json={"name": "A", "tax_id": "1", "jurisdiction": "CO"}, headers=auth)
+    client.post("/clients", json={"name": "B", "tax_id": "2", "jurisdiction": "CO"}, headers=auth)
+
+    clients = client.get("/clients", headers=auth).json()
+    assert [c["name"] for c in clients] == ["A", "B"]
+
+    client.post(
+        "/invoices",
+        json={"client_id": clients[0]["id"], "currency": "COP",
+              "lines": [{"description": "x", "quantity": "1", "unit_price": "1000000",
+                         "tax_code": "iva_19"}]},
+        headers=auth,
+    )
+    invoices = client.get("/invoices", headers=auth).json()
+    assert len(invoices) == 1
+    # Summary shape: number, status, and the computed total (no line items).
+    assert invoices[0]["number"] == 1
+    assert invoices[0]["total"] == {"amount": "1190000", "currency": "COP"}
+
+
 def test_record_payment_marks_invoice_paid_over_http(client: TestClient) -> None:
     auth = {"Authorization": f"Bearer {_token(client)}"}
     client_id = client.post(

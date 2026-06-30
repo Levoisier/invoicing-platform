@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from pydantic import BaseModel
+from sqlalchemy import select
 
 from invoicing.models import Invoice, Party
 from invoicing.pdf import render_invoice_pdf
@@ -86,8 +87,27 @@ class InvoiceOut(BaseModel):
     total: MoneyOut
 
 
+class InvoiceSummaryOut(BaseModel):
+    # Lighter shape for the list view: no line items, just enough to render a row.
+    id: int
+    number: int
+    status: str
+    client_id: int
+    total: MoneyOut
+
+
 def _money_out(money: Money) -> MoneyOut:
     return MoneyOut(amount=str(money.amount), currency=money.currency)
+
+
+def _client_out(party: Party) -> ClientOut:
+    return ClientOut(
+        id=party.id,
+        name=party.name,
+        tax_id=party.tax_id,
+        jurisdiction=party.jurisdiction,
+        address=party.address,
+    )
 
 
 def _invoice_out(invoice: Invoice, totals: InvoiceTotals) -> InvoiceOut:
@@ -124,13 +144,16 @@ def create_client(
     )
     session.add(party)
     session.flush()  # assign the id within the request's transaction
-    return ClientOut(
-        id=party.id,
-        name=party.name,
-        tax_id=party.tax_id,
-        jurisdiction=party.jurisdiction,
-        address=party.address,
-    )
+    return _client_out(party)
+
+
+@router.get("/clients", response_model=list[ClientOut])
+def list_clients(
+    session: Session = Depends(get_session),
+    _principal: object = Depends(get_principal),
+) -> list[ClientOut]:
+    parties = session.execute(select(Party).order_by(Party.id)).scalars().all()
+    return [_client_out(p) for p in parties]
 
 
 @router.post("/invoices", response_model=InvoiceOut, status_code=status.HTTP_201_CREATED)
@@ -157,6 +180,25 @@ def create_invoice(
         # message, not an opaque 500 — the request is unserviceable as composed.
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc)) from exc
     return _invoice_out(invoice, totals)
+
+
+@router.get("/invoices", response_model=list[InvoiceSummaryOut])
+def list_invoices(
+    session: Session = Depends(get_session),
+    _principal: object = Depends(get_principal),
+) -> list[InvoiceSummaryOut]:
+    # Registered before the "/invoices/{invoice_id}" route so the literal path wins.
+    invoices = session.execute(select(Invoice).order_by(Invoice.number)).scalars().all()
+    return [
+        InvoiceSummaryOut(
+            id=inv.id,
+            number=inv.number,
+            status=inv.status.value,
+            client_id=inv.party_id,
+            total=_money_out(compute_totals(inv).total),
+        )
+        for inv in invoices
+    ]
 
 
 @router.get("/invoices/{invoice_id}", response_model=InvoiceOut)

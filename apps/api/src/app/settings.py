@@ -25,5 +25,9 @@ class Settings:
     auth_username: str = os.environ.get("AUTH_USERNAME", "admin")
     auth_password: str = os.environ.get("AUTH_PASSWORD", "admin")
 
+    # Browser origins allowed to call the API (the Next.js app). Comma-separated;
+    # the SPA calls the API cross-origin, so it must be on this list or CORS blocks it.
+    cors_origins: str = os.environ.get("CORS_ORIGINS", "http://localhost:3000")
+
 
 settings = Settings()

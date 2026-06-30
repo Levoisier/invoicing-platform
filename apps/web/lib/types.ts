@@ -45,7 +45,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** List Clients */
+        get: operations["list_clients_clients_get"];
         put?: never;
         /** Create Client */
         post: operations["create_client_clients_post"];
@@ -62,7 +63,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** List Invoices */
+        get: operations["list_invoices_invoices_get"];
         put?: never;
         /** Create Invoice */
         post: operations["create_invoice_invoices_post"];
@@ -181,6 +183,18 @@ export interface components {
             lines: components["schemas"]["LineOut"][];
             subtotal: components["schemas"]["MoneyOut"];
             tax: components["schemas"]["MoneyOut"];
+            total: components["schemas"]["MoneyOut"];
+        };
+        /** InvoiceSummaryOut */
+        InvoiceSummaryOut: {
+            /** Id */
+            id: number;
+            /** Number */
+            number: number;
+            /** Status */
+            status: string;
+            /** Client Id */
+            client_id: number;
             total: components["schemas"]["MoneyOut"];
         };
         /** LedgerEntryOut */
@@ -336,6 +350,26 @@ export interface operations {
             };
         };
     };
+    list_clients_clients_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClientOut"][];
+                };
+            };
+        };
+    };
     create_client_clients_post: {
         parameters: {
             query?: never;
@@ -365,6 +399,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_invoices_invoices_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvoiceSummaryOut"][];
                 };
             };
         };

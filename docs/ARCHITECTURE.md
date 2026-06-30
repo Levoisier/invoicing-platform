@@ -144,6 +144,26 @@ Append a dated entry whenever you make or revise a structural decision. Keep it 
 
 <!-- Add decisions below, newest first. -->
 
+### 2026-06-29 — `apps/web`: a client-side SPA consuming the generated contract (B14)
+**Decision:** the web app is Next.js 15 App Router, but every page is a client component that
+calls the API directly from the browser (`NEXT_PUBLIC_API_URL`); `lib/api.ts` is a thin typed
+fetch wrapper whose types are imported from the generated `types.ts`. The JWT lives in
+localStorage and rides the `Authorization` header. To support this, the backend gained two
+list endpoints (`GET /clients`, `GET /invoices` summary) and CORS. **Why client-side calls,
+not a Next BFF/route handlers:** the project's thesis is the *backend* (transactional core +
+plugin tax); the frontend's job is to *consume the typed contract* and prove it's real, not to
+add a second server tier. Direct calls keep the data path obvious and make the generated-types
+win visible (a contract change surfaces as a TS error in `lib/api.ts`). **Why CORS + header
+token, not cookies:** the SPA and API are different origins in dev; a bearer header avoids
+cookie/CSRF machinery and lets the CORS allow-list stay credential-free. **Why list endpoints
+landed here:** the UI needs them and nothing earlier did — the contract grows with its first
+real consumer. **Cost / watch:** (1) localStorage tokens are XSS-exposed — fine for v1
+single-user dev, a hardened build wants httpOnly cookies; (2) PDF download must fetch-with-
+header then blob (a plain `<a href>` can't send the token); (3) the UI is intentionally
+unstyled (README §7: polish the core, not the buttons); (4) verification leans on `next build`
++ a Playwright flow rather than a committed browser-test suite — a CI-wired Playwright job is a
+later hardening step.
+
 ### 2026-06-29 — Contract generation: schema built DB-free, one Make target (B13)
 **Decision:** `make gen-types` runs `app.export_openapi` (which dumps `create_app(run_migrations=False).openapi()`)
 and pipes the JSON through `openapi-typescript` into `apps/web/lib/types.ts`. To build the

@@ -174,10 +174,17 @@ OpenAPI (from FastAPI) → `openapi-typescript` → `apps/web/lib/types.ts`, wir
   assert the schema source exposes the domain routes and serializes Money as a string pair —
   and run with no database.
 
-## B14 — `apps/web`  `[ ]`
+## B14 — `apps/web`  `[x]`
 Next.js screens: client list/create, invoice create/list/detail, mark-paid, PDF download —
 consuming the **generated** types from B13.
 - **Done when:** the full user flow in `README.md` §7.A is clickable in a browser.
+- Done: Next.js 15 (App Router) client app — login, clients (list/create), invoices
+  (list/create/detail), mark-paid, PDF download — with a typed `lib/api.ts` whose request/
+  response types come straight from the generated `types.ts`. Backend gained `GET /clients`,
+  `GET /invoices` (summary), and CORS to support the browser SPA. Verified two ways: `next
+  build` typechecks the contract consumption, and a Playwright run drove the whole §7.A flow
+  through real Chromium (login → client → CO invoice with IVA → record payment → status
+  `paid`), screenshots captured.
 
 ## B15 — Packaging & docs  `[ ]`
 `Dockerfile.api`, `Dockerfile.web`, compose, README run instructions; finalize

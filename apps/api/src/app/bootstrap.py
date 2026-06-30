@@ -11,6 +11,7 @@ package in pyproject and this file does not change.
 from __future__ import annotations
 
 from fastapi import FastAPI, HTTPException, status
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from app.settings import Settings, settings
@@ -67,6 +68,16 @@ def create_app(config: Settings = settings, *, run_migrations: bool = True) -> F
         register_modules(modules)
 
     app = FastAPI(title="Invoicing Platform API")
+
+    # The SPA calls this API from another origin (localhost:3000 → :8000), so the
+    # browser needs CORS clearance. allow_credentials stays off — we pass the JWT in
+    # the Authorization header, not a cookie, so a wildcard-free origin list suffices.
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[o.strip() for o in config.cors_origins.split(",") if o.strip()],
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
     @app.get("/health")
     def health() -> dict[str, str]:
