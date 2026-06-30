@@ -38,6 +38,22 @@ or file when useful.
 
 <!-- Add new lessons below this line, newest first. -->
 
+## 2026-06-30 — Packaging traps: native libs in the image, NEXT_PUBLIC is build-time (B15)
+**Context:** Writing the Dockerfiles + compose so `docker compose up` serves the whole stack.
+**Surprise/reminders:** Two that bite at the container boundary, not in dev. (1) WeasyPrint
+"worked on the laptop" (B11) only because the laptop had libpango/cairo/harfbuzz. A
+`python:slim` image does **not** — so the `/pdf` route would 500 in production with a cryptic
+load error unless those `apt` packages are baked into `Dockerfile.api`. The dev-vs-prod gap is
+invisible until you containerize. (2) `NEXT_PUBLIC_*` is inlined into the JS bundle at **build
+time**, and the value must be what the *browser* can reach — `http://localhost:8000` (the host
+port), not the compose-internal `api` hostname (the browser isn't on the compose network).
+Passing it as a runtime env var would silently do nothing — so it's a Docker **build arg**.
+**Resolution:** Pinned the WeasyPrint libs in the API image; passed `NEXT_PUBLIC_API_URL` as a
+build arg in compose. Validated with `docker compose config` (no Docker daemon in this sandbox
+— a live `up` still needs a real Docker host, same caveat as B0).
+**Takeaway:** "works in dev" hides two classes of bug that only surface in a container —
+missing system libraries, and build-time vs run-time config. Check both when packaging.
+
 ## 2026-06-28 — WeasyPrint just worked here; verify deps before assuming the fallback (B11)
 **Context:** B11's PDF step. The README and CLAUDE.md §3 both pre-warn that WeasyPrint's
 native deps (Pango/cairo) often fight the image, and sanction a ReportLab/headless-Chromium

@@ -2,23 +2,26 @@
 # docker-compose together (README §3, §8). Targets are intentionally thin
 # wrappers so the real commands stay visible and copy-pasteable.
 
-.PHONY: up down dev migrate gen-types test lint sync
+.PHONY: up down db dev migrate gen-types test lint sync
 
-# Bring up Postgres (the only service that builds today; api/web are behind the
-# `full` profile until their Dockerfiles land in B10/B14).
+# Bring up the whole self-host stack (db + api + web), building images as needed.
+# The api migrates on startup, so the §7.A flow is live once this settles.
 up:
-	docker compose up -d db
+	docker compose up -d --build
 
 down:
 	docker compose down
+
+# Just Postgres — for local dev where the API runs from source with reload.
+db:
+	docker compose up -d db
 
 # Install/refresh the workspace virtualenv from uv.lock.
 sync:
 	uv sync
 
-# Local dev without full Docker: Postgres in a container, API with reload. The
-# web dev server is added in B14; kept here as the documented single entrypoint.
-dev: up
+# Local dev without full Docker: Postgres in a container, API with reload.
+dev: db
 	uv run uvicorn app.main:app --reload --app-dir apps/api/src
 
 # Run all module migrations in dependency (toposort) order. The host's bootstrap

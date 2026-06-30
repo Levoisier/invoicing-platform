@@ -1,7 +1,6 @@
-# Local stack: db + api + web. v1 self-host target (README §8). The api/web image
-# builds are stubbed until B10/B14 — for now `make up` brings up Postgres alone,
-# which is all B0 needs. The service definitions are here so the topology is
-# visible from the start and later items fill in the Dockerfiles.
+# Local self-host stack: db + api + web (README §8). `docker compose up` builds
+# and starts all three. The api migrates on startup once the db is healthy, so the
+# §7.A flow is reachable as soon as the containers are up — no manual migrate step.
 
 services:
   db:
@@ -23,12 +22,11 @@ services:
       retries: 10
 
   api:
-    # Built in B10 (infra/docker/Dockerfile.api). Declared now so the topology is
-    # complete; `profiles` keeps it out of the default `make up` until it exists.
-    profiles: ["full"]
     build:
       context: .
       dockerfile: infra/docker/Dockerfile.api
+    # DATABASE_URL (host "db"), JWT/auth/CORS all come from .env — copy
+    # .env.example → .env before `up`.
     env_file: .env
     depends_on:
       db:
@@ -37,12 +35,13 @@ services:
       - "8000:8000"
 
   web:
-    # Built in B14 (infra/docker/Dockerfile.web). Same staging as api.
-    profiles: ["full"]
     build:
       context: .
       dockerfile: infra/docker/Dockerfile.web
-    env_file: .env
+      args:
+        # Baked into the browser bundle at build time, so it must be the
+        # host-reachable API URL, not the compose-internal "api" hostname.
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
     depends_on:
       - api
     ports:

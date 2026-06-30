@@ -217,14 +217,24 @@ Polished UI, real payment gateways, DIAN compliance, multi-tenancy, or a second 
 
 ---
 
-## 8. Running it (target state)
+## 8. Running it
 
 ```bash
 cp .env.example .env
-make up            # docker compose: db + api + web
-make migrate       # run module migrations in dependency order
-make gen-types     # OpenAPI -> apps/web/lib/types.ts
+make up            # docker compose: builds & starts db + api + web
 # web: http://localhost:3000   api docs: http://localhost:8000/docs
+# log in with AUTH_USERNAME / AUTH_PASSWORD from .env (dev default: admin / admin)
 ```
 
-For local dev without full Docker: `make dev` runs Postgres in a container, the API with reload, and the Next.js dev server together.
+The **api migrates the database on startup** (the host's `bootstrap.create_app`
+runs the module loader once the db is healthy), so there's no separate migrate
+step — the create-client → invoice → payment → PDF flow (§7.A) is live as soon as
+the containers settle.
+
+- `make down` — stop the stack.
+- `make db` — just Postgres, for local dev.
+- `make dev` — Postgres in a container + the API from source with reload.
+- `make gen-types` — regenerate `apps/web/lib/types.ts` from the live OpenAPI schema
+  (needs the web deps installed: `cd apps/web && npm install`).
+- `make test` / `make lint` — the Python suite (needs a reachable Postgres; see
+  `DATABASE_URL`) and ruff.

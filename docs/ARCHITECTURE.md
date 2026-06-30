@@ -144,6 +144,25 @@ Append a dated entry whenever you make or revise a structural decision. Keep it 
 
 <!-- Add decisions below, newest first. -->
 
+### 2026-06-30 — Packaging: compose stack, api self-migrates, WeasyPrint libs (B15)
+**Decision:** `docker compose up` builds and runs db + api + web. `Dockerfile.api` installs
+from the committed lockfile (`uv sync --frozen --no-dev`) and bakes in WeasyPrint's system
+libraries; `Dockerfile.web` runs `npm ci && next build` with `NEXT_PUBLIC_API_URL` passed as
+a build arg. The db healthcheck gates the api via `depends_on: condition: service_healthy`,
+and the api migrates on startup — so no separate migrate step in the happy path. **Why bake
+the WeasyPrint libs:** the PDF route's native deps (B11) must be in the image or `/pdf` 500s
+in production though it works on a dev box — the single most likely "works on my machine"
+trap here, so it's pinned in the Dockerfile and noted in §4. **Why `NEXT_PUBLIC_API_URL` is a
+build arg, not runtime env:** Next inlines `NEXT_PUBLIC_*` at build time, and the browser
+reaches the API on the *host* port, so it must be `localhost:8000`, not the compose-internal
+`api` hostname. **Why api-self-migrate instead of a migrate container:** simplest correct
+thing for single-process v1; the B5/B10 note stands that a dedicated one-shot migrate job is
+the right move before scaling to multiple api replicas (they'd race the loader). **Cost /
+limitation:** the web image is single-stage (larger than a `next build --standalone` + slim
+runtime would be) — legible over lean, a documented future optimization. And this sandbox has
+no Docker daemon, so the stack was validated with `docker compose config` only; a live
+`docker compose up` must confirm the image builds on a real Docker host.
+
 ### 2026-06-29 — `apps/web`: a client-side SPA consuming the generated contract (B14)
 **Decision:** the web app is Next.js 15 App Router, but every page is a client component that
 calls the API directly from the browser (`NEXT_PUBLIC_API_URL`); `lib/api.ts` is a thin typed

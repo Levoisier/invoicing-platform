@@ -1,0 +1,13 @@
+# Keep build contexts small and reproducible: never ship local caches, venvs, or
+# already-built artifacts into an image (they'd be stale and bloat the context).
+**/node_modules
+**/.next
+.venv
+**/__pycache__
+*.pyc
+.pytest_cache
+.ruff_cache
+**/.mypy_cache
+.git
+openapi.json
+.env

@@ -1,0 +1,34 @@
+# API host image. Builds the edition from the uv workspace and serves it with
+# uvicorn. The host migrates on startup (create_app, B10), so once the db is
+# healthy this container brings the schema up by itself — no separate step.
+
+FROM python:3.12-slim
+
+# WeasyPrint's native stack (B11). Without these the /pdf route would 500 at
+# runtime with a cryptic "cannot load library" — they must be in the image, not
+# just on a dev laptop. fonts-dejavu-core gives WeasyPrint a default font to lay out.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      libpango-1.0-0 libpangocairo-1.0-0 libpangoft2-1.0-0 \
+      libharfbuzz0b libcairo2 libgdk-pixbuf-2.0-0 libffi8 \
+      libfontconfig1 fonts-dejavu-core \
+ && rm -rf /var/lib/apt/lists/*
+
+# uv resolves and installs from the committed lockfile (reproducible builds).
+COPY --from=ghcr.io/astral-sh/uv:0.5 /uv /usr/local/bin/uv
+
+WORKDIR /app
+# Only what uv needs to resolve the workspace: the root config, the lockfile, and
+# every member (packages/* + apps/api). Copying these before `uv sync` lets Docker
+# cache the dependency layer across code-only changes.
+COPY pyproject.toml uv.lock ./
+COPY packages/ packages/
+COPY apps/api/ apps/api/
+
+# --frozen: fail if the lockfile is stale rather than silently re-resolving.
+# --no-dev: pytest/pypdf/httpx2 are test-only; a prod image shouldn't carry them.
+RUN uv sync --frozen --no-dev
+ENV PATH="/app/.venv/bin:$PATH"
+
+EXPOSE 8000
+# 0.0.0.0 so the mapped host port can reach it from outside the container.
+CMD ["uvicorn", "app.main:app", "--app-dir", "apps/api/src", "--host", "0.0.0.0", "--port", "8000"]

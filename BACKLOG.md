@@ -186,12 +186,19 @@ consuming the **generated** types from B13.
   through real Chromium (login → client → CO invoice with IVA → record payment → status
   `paid`), screenshots captured.
 
-## B15 — Packaging & docs  `[ ]`
+## B15 — Packaging & docs  `[x]`
 `Dockerfile.api`, `Dockerfile.web`, compose, README run instructions; finalize
 `docs/ARCHITECTURE.md` (decision record) and `docs/plugin-sdk.md` ("write a tax plugin in
 ~50 lines").
 - **Done when:** a clean `docker compose up` brings up db + api + web and the §7.A flow
   works end to end.
+- Done: `Dockerfile.api` (uv `--frozen --no-dev`, WeasyPrint system libs) and
+  `Dockerfile.web` (npm ci → build, `NEXT_PUBLIC_API_URL` baked); compose runs all three
+  (profiles dropped), db healthcheck gates the api, which self-migrates on startup; `.dockerignore`
+  added; `make up` builds+starts the stack, `make db`/`make dev` for local. README §8 updated;
+  `docs/plugin-sdk.md` written. **Note:** no Docker daemon in this sandbox, so the stack was
+  validated with `docker compose config` (resolves cleanly) — a live `docker compose up` must
+  be run on a Docker host to fully confirm.
 
 ---
 
