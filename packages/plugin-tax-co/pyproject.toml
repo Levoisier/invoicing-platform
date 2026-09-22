@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Colombia (CO / IVA) tax plugin: implements the nucleus TaxCalculator contract."
 requires-python = ">=3.11"
 # Depends on nucleus for the contract it implements — nothing else. The core does
-# the opposite: it never depends on this package (CLAUDE.md §2).
+# the opposite: it never depends on this package (AGENTS.md §2).
 dependencies = ["nucleus"]
 
 # Self-registration seam. The host discovers this calculator by loading the

@@ -2,11 +2,11 @@
 
 The deep architecture for the invoicing platform, plus the **decision record** where we
 write down *why* a structural choice was made. [`README.md`](../README.md) is product
-truth (what we're building); [`CLAUDE.md`](../CLAUDE.md) is process truth (how we work);
+truth (what we're building); [`AGENTS.md`](../AGENTS.md) is process truth (how we work);
 **this file is design truth** (why the code is shaped this way).
 
 > Learning-project note: this file exists so the owner can reopen it later and reconstruct
-> the reasoning. Keep entries concise and *why*-focused (per `CLAUDE.md` §0.2). When a
+> the reasoning. Keep entries concise and *why*-focused (per `AGENTS.md` §0.2). When a
 > decision is too big for an inline code comment, it belongs here.
 
 ---
@@ -192,7 +192,7 @@ mounts routers (no DB) — and `ModuleContext.session` became optional (None on 
 in CI and on any dev machine without Postgres; the schema is a pure function of routes +
 Pydantic models, so requiring a DB would be incidental coupling. This also cleanly separates
 "wire the app's HTTP surface" from "migrate the database" — two things B10 had fused.
-**Why one Make target owns the file:** `types.ts` is generated, never hand-edited (CLAUDE.md
+**Why one Make target owns the file:** `types.ts` is generated, never hand-edited (AGENTS.md
 §2); making regeneration a single command means a backend contract change can't silently
 drift from the frontend's view of it — the diff shows up the moment you run it. **Cost /
 watch:** (1) the toolchain hop is real — gen-types needs Node deps installed (`npm install` in
@@ -230,7 +230,7 @@ invoicing (it owns status), so invoicing would have to import a payments event, 
 is the earlier, lower module. Putting the event in invoicing instead is conceptually
 backwards (a "payment recorded" event owned by invoicing). The build spine explicitly places
 payments after invoicing, so a same-process downward import is the honest model and keeps the
-atomic action obviously in one transaction. CLAUDE.md §2 forbids core→plugin imports, not
+atomic action obviously in one transaction. AGENTS.md §2 forbids core→plugin imports, not
 module→module ones. **Why signed-amount ledger:** storing +debit/−credit makes the
 double-entry invariant a one-line "sums to zero" check. **The demonstration:** a test posts
 the ledger in a separate committed transaction and then fails the status update in another —
@@ -302,7 +302,7 @@ registry-resolved calculator (B9).
 Auth is two layers: `JWTAuth` (pure pyjwt — issue/verify, enforces signature, expiry, and a
 non-empty subject) and `gateway.require_principal(auth)` (the FastAPI dependency that reads
 the bearer token and answers 401). **Why FastAPI in the core:** README §1 says the nucleus
-*owns the API gateway*; "framework-light" (CLAUDE.md §2) means no dependency on a *module or
+*owns the API gateway*; "framework-light" (AGENTS.md §2) means no dependency on a *module or
 plugin*, not "no web framework". Putting the gateway here is what lets modules expose
 protected routes uniformly without each re-implementing auth. **Why split pure vs bound:**
 token rules are security-critical and must be testable without HTTP; the thin FastAPI adapter

@@ -5,7 +5,7 @@ This is the project's memory. When you hit a surprise — a library that didn't 
 tax rule that wasn't what the README assumed, an architectural choice that turned out
 wrong — you write it down here so the next agent (and the owner) doesn't pay for it twice.
 
-This pairs with the learning mandate in `CLAUDE.md` §0: the **How & Why** in your reply
+This pairs with the learning mandate in `AGENTS.md` §0: the **How & Why** in your reply
 explains *this* change; `LESSONS.md` captures the *transferable* insight that outlives it.
 
 ## When to add an entry
@@ -55,7 +55,7 @@ build arg in compose. Validated with `docker compose config` (no Docker daemon i
 missing system libraries, and build-time vs run-time config. Check both when packaging.
 
 ## 2026-06-28 — WeasyPrint just worked here; verify deps before assuming the fallback (B11)
-**Context:** B11's PDF step. The README and CLAUDE.md §3 both pre-warn that WeasyPrint's
+**Context:** B11's PDF step. The README and AGENTS.md §3 both pre-warn that WeasyPrint's
 native deps (Pango/cairo) often fight the image, and sanction a ReportLab/headless-Chromium
 fallback.
 **Surprise:** No fight at all — `ldconfig -p` already listed libpango/libcairo/libharfbuzz,
@@ -108,7 +108,7 @@ registry for plugins — module asks by name, host supplies. And watch what runs
 time once the app does real work at construction.
 
 ## 2026-06-28 — CO IVA rates verified; "excluded" ≠ "exempt" but we fold them (B9)
-**Context:** Building the CO tax plugin; CLAUDE.md §3 requires verifying rates against current
+**Context:** Building the CO tax plugin; AGENTS.md §3 requires verifying rates against current
 DIAN rules, not memory.
 **Surprise/confirmation:** Rates hold as the README assumed — general **19%**, reduced
 **5%**, and 0% — but the 0% bucket hides a real distinction Colombian tax law makes:

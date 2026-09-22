@@ -7,7 +7,7 @@ requires-python = ">=3.11"
 # (Pydantic), the Postgres driver, JWT, and the API gateway itself (FastAPI) —
 # README §1 puts the gateway *in* the nucleus. "Framework-light" here means it
 # never depends on a module or a plugin; that inversion is the whole project
-# (CLAUDE.md §2). FastAPI is the gateway framework the core provides, not a domain
+# (AGENTS.md §2). FastAPI is the gateway framework the core provides, not a domain
 # dependency.
 dependencies = [
     "sqlalchemy>=2.0",

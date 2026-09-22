@@ -5,7 +5,7 @@ spine*: each item is a self-contained unit, and later items depend on earlier on
 them roughly top to bottom. Don't start an item whose dependencies aren't done unless you
 can stub them honestly.
 
-**Before starting any item, read [`CLAUDE.md`](CLAUDE.md)** — especially §0 (this is a
+**Before starting any item, read [`AGENTS.md`](AGENTS.md)** — especially §0 (this is a
 learning project: explain *how & why*, document the *why* concisely) and §2 (the
 architectural guardrails you must not cross).
 
